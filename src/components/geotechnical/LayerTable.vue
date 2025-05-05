@@ -35,10 +35,10 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import Tabulator from 'tabulator-tables';
+import * as Tabulator from 'tabulator-tables'; // Ispravljen uvoz
 import 'tabulator-tables/dist/css/tabulator.min.css';
-import { Button } from 'primevue/button';
-import { InputNumber } from 'primevue/inputnumber';
+import Button from 'primevue/button';
+import InputNumber from 'primevue/inputnumber';
 import { useGeotechnicalStore } from '../../store/geotechnical';
 import { fetchLayers, saveLayers } from '../../services/api';
 
