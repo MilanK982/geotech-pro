@@ -1,25 +1,29 @@
+<!-- src/components/geotechnical/GeotechnicalModel.vue -->
 <template>
-    <TabView>
-      <TabPanel header="Slojevi tla">
+  <div>
+    <TabView v-model:activeIndex="activeTab">
+      <TabPanel header="Slojevi">
         <LayerTable />
       </TabPanel>
-      <TabPanel header="Nivo podzemne vode">
-        <GroundWater />
-      </TabPanel>
-      <TabPanel header="CPT podaci">
+      <TabPanel header="CPT Testovi">
         <CptTable />
       </TabPanel>
     </TabView>
-  </template>
-  
-  <script>
-  import TabView from 'primevue/tabview'; // Ispravljen uvoz
-  import TabPanel from 'primevue/tabpanel'; // Ispravljen uvoz
-  import LayerTable from '../components/geotechnical/LayerTable.vue';
-  import GroundWater from '../components/geotechnical/GroundWater.vue';
-  import CptTable from '../components/geotechnical/CptTable.vue';
-  
-  export default {
-    components: { TabView, TabPanel, LayerTable, GroundWater, CptTable },
-  };
-  </script>
+  </div>
+</template>
+
+<script setup>
+import { ref } from 'vue';
+import TabView from 'primevue/tabview';
+import TabPanel from 'primevue/tabpanel';
+import LayerTable from './LayerTable.vue';
+import CptTable from './CptTable.vue';
+import { useGeotechnicalStore } from '../../store/geotechnical';
+import { useRoute } from 'vue-router';
+
+const store = useGeotechnicalStore();
+const route = useRoute();
+const activeTab = ref(0);
+
+store.setCurrentProjectId(route.params.modelId);
+</script>

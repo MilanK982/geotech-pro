@@ -1,8 +1,9 @@
+// src/services/api.js
 import axios from 'axios';
 
 // Kreiraj Axios instancu sa osnovnim URL-om
 const api = axios.create({
-  baseURL: 'http://localhost:8000', // Prilagodi port ako Django koristi drugi (npr. 8000 je default)
+  baseURL: 'http://localhost:8000',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -20,11 +21,19 @@ function getCsrfToken() {
 
 // Interceptor za dodavanje CSRF tokena u POST zahteve
 api.interceptors.request.use((config) => {
-  if (['post', 'put', 'delete'].includes(config.method)) {
-    config.headers['X-CSRFToken'] = getCsrfToken();
+  if (!config.url.endsWith('/login/')) {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers['Authorization'] = `Token ${token}`;
+    }
   }
   return config;
 });
+
+export async function login(username, password) {
+  const response = await api.post('/geotech/login/', { username, password });
+  return response.data;
+}
 
 export async function fetchLayers(modelId) {
   const response = await api.get(`/geotech/get_layers/${modelId}/`);

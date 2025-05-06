@@ -1,9 +1,32 @@
 from django.db import models
+from django.contrib.auth.models import User
+
 
 # Create your models here.
-from django.db import models
+
+class Project(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='projects')
+    name = models.CharField(max_length=100, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+class Object(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='objects')
+    name = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        unique_together = ['project', 'name']
 
 class GeotechnicalModel(models.Model):
+    object = models.ForeignKey(Object, on_delete=models.CASCADE, related_name='models', null=True, blank=True)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='models')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='models')
     name = models.CharField(max_length=100)
     npv = models.FloatField(default=0)
     npv_max = models.FloatField(default=0)
@@ -11,6 +34,9 @@ class GeotechnicalModel(models.Model):
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        unique_together = ['object', 'name']
 
 class Layer(models.Model):
     model = models.ForeignKey(GeotechnicalModel, on_delete=models.CASCADE, related_name='layers')
@@ -43,3 +69,4 @@ class CptData(models.Model):
 
     def __str__(self):
         return f"CPT Data at {self.depth}m"
+

@@ -1,5 +1,7 @@
+# geotech/serializers.py
 from rest_framework import serializers
 from .models import GeotechnicalModel, Layer, CptTest, CptData
+from django.contrib.auth.models import User
 
 class CptDataSerializer(serializers.ModelSerializer):
     class Meta:
@@ -37,15 +39,16 @@ class LayerSerializer(serializers.ModelSerializer):
 class GeotechnicalModelSerializer(serializers.ModelSerializer):
     layers = LayerSerializer(many=True)
     cpt_tests = CptTestSerializer(many=True)
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = GeotechnicalModel
-        fields = ['id', 'name', 'npv', 'npv_max', 'layers', 'cpt_tests']
+        fields = ['id', 'user', 'name', 'npv', 'npv_max', 'layers', 'cpt_tests']
 
     def create(self, validated_data):
         layers_data = validated_data.pop('layers')
         cpt_tests_data = validated_data.pop('cpt_tests')
-        model = GeotechnicalModel.objects.create(**validated_data)
+        model = GeotechnicalModel.objects.create(user=self.context['request'].user, **validated_data)
         for layer_data in layers_data:
             Layer.objects.create(model=model, **layer_data)
         for cpt_test_data in cpt_tests_data:

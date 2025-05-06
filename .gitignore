@@ -23,3 +23,9 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Backend
+backend-geotech-pro/**/*.pyc
+backend-geotech-pro/**/__pycache__/
+backend-geotech-pro/venv/
+backend-geotech-pro/*.sqlite3
