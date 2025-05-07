@@ -65,7 +65,7 @@ class CptData(models.Model):
     depth = models.FloatField(default=0)
     qc = models.FloatField(default=0)
     fs = models.FloatField(default=0)
-    u = models.FloatField(default=0)
+    u2 = models.FloatField(default=0)
 
     def __str__(self):
         return f"CPT Data at {self.depth}m"

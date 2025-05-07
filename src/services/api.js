@@ -1,7 +1,6 @@
 // src/services/api.js
 import axios from 'axios';
 
-// Kreiraj Axios instancu sa osnovnim URL-om
 const api = axios.create({
   baseURL: 'http://localhost:8000',
   headers: {
@@ -9,7 +8,6 @@ const api = axios.create({
   },
 });
 
-// Funkcija za dohvatanje CSRF tokena iz cookies-a
 function getCsrfToken() {
   const name = 'csrftoken';
   const cookieValue = document.cookie
@@ -19,7 +17,6 @@ function getCsrfToken() {
   return cookieValue || '';
 }
 
-// Interceptor za dodavanje CSRF tokena u POST zahteve
 api.interceptors.request.use((config) => {
   if (!config.url.endsWith('/login/')) {
     const token = localStorage.getItem('token');
@@ -36,16 +33,34 @@ export async function login(username, password) {
 }
 
 export async function fetchLayers(modelId) {
-  const response = await api.get(`/geotech/get_layers/${modelId}/`);
-  return response.data;
+  try {
+    const response = await api.get(`/geotech/get_layers/${modelId}/`);
+    console.log('Fetched data:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching layers:', error);
+    throw error;
+  }
 }
 
 export async function saveLayers(modelId, data) {
-  const response = await api.post(`/geotech/model_detail/${modelId}/`, data);
-  return response.data;
+  try {
+    const response = await api.post(`/geotech/save_layers/${modelId}/`, data);
+    console.log('Saved layers:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error saving layers:', error);
+    throw error;
+  }
 }
 
 export async function saveCpt(modelId, data) {
-  const response = await api.post(`/geotech/model_detail/${modelId}/`, data);
-  return response.data;
+  try {
+    const response = await api.post(`/geotech/save_cpt/${modelId}/`, data);
+    console.log('Saved CPT:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error saving CPT:', error);
+    throw error;
+  }
 }
