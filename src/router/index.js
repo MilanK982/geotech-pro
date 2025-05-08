@@ -1,32 +1,63 @@
 // src/router/index.js
 import { createRouter, createWebHistory } from 'vue-router';
-import GeotechnicalModel from '../components/geotechnical/GeotechnicalModel.vue';
-import Login from '../components/auth/Login.vue';
+import { useAuthStore } from '@/stores/auth.store';
 
 const routes = [
   {
     path: '/',
-    name: 'Login',
-    component: Login,
+    redirect: '/login'
   },
   {
-    path: '/geotechnical/:modelId',
-    name: 'GeotechnicalModel',
-    component: GeotechnicalModel,
-    props: true,
-    meta: { requiresAuth: true },
+    path: '/login',
+    name: 'Login',
+    component: () => import('@/views/LoginView.vue'),
+    meta: { requiresAuth: false }
   },
+  {
+    path: '/register',
+    name: 'Register',
+    component: () => import('@/views/RegisterView.vue'),
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/forgot-password',
+    name: 'ForgotPassword',
+    component: () => import('@/views/ForgotPasswordView.vue'),
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/dashboard',
+    name: 'Dashboard',
+    component: () => import('@/views/DashboardView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/projects',
+    name: 'Projects',
+    component: () => import('@/views/ProjectsView.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/projects/:id',
+    name: 'ProjectDetails',
+    component: () => import('@/views/ProjectDetailsView.vue'),
+    meta: { requiresAuth: true }
+  }
 ];
 
 const router = createRouter({
   history: createWebHistory(),
-  routes,
+  routes
 });
 
 router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem('token');
-  if (to.meta.requiresAuth && !token) {
-    next({ name: 'Login' });
+  const authStore = useAuthStore();
+  const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
+
+  if (requiresAuth && !authStore.isAuthenticated) {
+    next('/login');
+  } else if (!requiresAuth && authStore.isAuthenticated) {
+    next('/dashboard');
   } else {
     next();
   }

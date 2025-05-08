@@ -1,24 +1,22 @@
-<!-- src/components/auth/Login.vue -->
 <template>
-  <div class="login-container">
+  <div class="login-form">
     <Card class="login-card">
       <template #title>
-        <h2>{{ $t('auth.loginTitle') }}</h2>
+        {{ $t('auth.loginTitle') }}
       </template>
       <template #content>
-        <form @submit.prevent="handleLogin" class="p-fluid">
+        <form @submit.prevent="handleSubmit" class="p-fluid">
           <div class="field">
-            <label for="username">{{ $t('common.username') }}</label>
+            <label for="email">{{ $t('common.email') }}</label>
             <InputText
-              id="username"
-              name="username"
-              v-model="username"
-              :class="{ 'p-invalid': submitted && !username }"
+              id="email"
+              v-model="email"
+              type="email"
+              :class="{ 'p-invalid': submitted && !email }"
               required
-              autocomplete="username"
             />
-            <small class="p-error" v-if="submitted && !username">
-              {{ $t('validation.usernameRequired') }}
+            <small class="p-error" v-if="submitted && !email">
+              {{ $t('validation.emailRequired') }}
             </small>
           </div>
 
@@ -26,13 +24,11 @@
             <label for="password">{{ $t('common.password') }}</label>
             <Password
               id="password"
-              name="password"
               v-model="password"
               :feedback="false"
               toggleMask
               :class="{ 'p-invalid': submitted && !password }"
               required
-              autocomplete="current-password"
             />
             <small class="p-error" v-if="submitted && !password">
               {{ $t('validation.passwordRequired') }}
@@ -40,11 +36,7 @@
           </div>
 
           <div class="field-checkbox">
-            <Checkbox 
-              id="remember" 
-              name="rememberMe"
-              v-model="rememberMe" 
-              :binary="true" />
+            <Checkbox id="remember" v-model="rememberMe" :binary="true" />
             <label for="remember">{{ $t('auth.rememberMe') }}</label>
           </div>
 
@@ -73,7 +65,7 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { useAuthStore } from '../../stores/auth.store';
+import { useAuthStore } from '@/stores/auth.store';
 import { useToast } from 'primevue/usetoast';
 import Card from 'primevue/card';
 import InputText from 'primevue/inputtext';
@@ -85,19 +77,19 @@ const router = useRouter();
 const authStore = useAuthStore();
 const toast = useToast();
 
-const username = ref('');
+const email = ref('');
 const password = ref('');
 const rememberMe = ref(false);
 const submitted = ref(false);
 const loading = ref(false);
 
-const handleLogin = async () => {
+const handleSubmit = async () => {
   submitted.value = true;
 
-  if (username.value && password.value) {
+  if (email.value && password.value) {
     loading.value = true;
     try {
-      await authStore.login(username.value, password.value);
+      await authStore.login(email.value, password.value);
       toast.add({
         severity: 'success',
         summary: 'Success',
@@ -106,11 +98,10 @@ const handleLogin = async () => {
       });
       router.push('/dashboard');
     } catch (error) {
-      console.error('Login error:', error);
       toast.add({
         severity: 'error',
         summary: 'Error',
-        detail: error.response?.data?.error || error.message || 'Login failed',
+        detail: error.message || 'Login failed',
         life: 3000
       });
     } finally {
@@ -121,19 +112,17 @@ const handleLogin = async () => {
 </script>
 
 <style scoped>
-.login-container {
+.login-form {
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
   background-color: var(--surface-ground);
-  padding: 2rem;
 }
 
 .login-card {
   width: 100%;
   max-width: 400px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .field {
@@ -142,27 +131,9 @@ const handleLogin = async () => {
 
 .field-checkbox {
   margin-bottom: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
 }
 
 :deep(.p-card) {
-  background: var(--surface-card);
-  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
-
-:deep(.p-card-title) {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-:deep(.p-card-content) {
-  padding: 2rem;
-}
-
-:deep(.p-card-footer) {
-  padding: 1rem 2rem;
-  border-top: 1px solid var(--surface-border);
-}
-</style>
+</style> 
