@@ -50,6 +50,7 @@
     "bottomDepthGreaterThanTop": "Bottom depth must be greater than top depth"
   },
   "dashboard": {
+    "title": "Dashboard",
     "totalProjects": "Total Projects",
     "activeProjects": "Active Projects",
     "totalCptTests": "CPT Tests",
@@ -70,7 +71,7 @@
     "projectName": "Project Name",
     "projectDescription": "Description",
     "createDate": "Created",
-    "lastModified": "Last Modified",
+    "updatedAt": "Updated At",
     "actions": "Actions",
     "location": "Location",
     "startDate": "Start Date",

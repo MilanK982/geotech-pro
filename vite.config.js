@@ -1,8 +1,8 @@
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-import path from 'path'
+// vite.config.js
+import { defineConfig } from 'vite';
+import vue from '@vitejs/plugin-vue';
+import path from 'path';
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [vue()],
   resolve: {
@@ -10,9 +10,19 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    proxy: {
+      '/geotech': { // Changed from '/api'
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+        logLevel: 'debug', // Add for debugging
+      },
+    },
+  },
   test: {
     environment: 'jsdom',
     globals: true,
-    setupFiles: ['./src/test/setup.js']
-  }
-})
+    setupFiles: ['./src/test/setup.js'],
+  },
+});

@@ -46,6 +46,7 @@
     "bottomDepthGreaterThanTop": "Donja dubina mora biti veća od gornje dubine"
   },
   "dashboard": {
+    "title": "Kontrolna Tabla",
     "totalProjects": "Ukupno Projekata",
     "activeProjects": "Aktivni Projekti",
     "totalCptTests": "CPT Ispitivanja",
@@ -62,6 +63,7 @@
   },
   "projects": {
     "title": "Projekti",
+    "updatedAt": "Ažurirano",
     "newProject": "Novi Projekat",
     "projectName": "Naziv Projekta",
     "projectDescription": "Opis",

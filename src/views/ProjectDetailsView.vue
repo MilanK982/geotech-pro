@@ -26,23 +26,35 @@
           <template #content>
             <div class="field">
               <label>{{ $t('project.description') }}</label>
-              <p>{{ project?.description }}</p>
+              <p>{{ project?.description || '-' }}</p>
             </div>
             <div class="field">
               <label>{{ $t('project.location') }}</label>
-              <p>{{ project?.location }}</p>
+              <p>{{ project?.location || '-' }}</p>
             </div>
             <div class="field">
               <label>{{ $t('project.client') }}</label>
-              <p>{{ project?.client }}</p>
+              <p>{{ project?.client || '-' }}</p>
+            </div>
+            <div class="field">
+              <label>{{ $t('project.status') }}</label>
+              <Tag :value="project?.status" :severity="getStatusSeverity(project?.status)" />
+            </div>
+            <div class="field">
+              <label>{{ $t('project.startDate') }}</label>
+              <p>{{ formatDate(project?.start_date) }}</p>
+            </div>
+            <div class="field">
+              <label>{{ $t('project.endDate') }}</label>
+              <p>{{ formatDate(project?.end_date) }}</p>
             </div>
             <div class="field">
               <label>{{ $t('project.createdAt') }}</label>
-              <p>{{ formatDate(project?.createdAt) }}</p>
+              <p>{{ formatDate(project?.created_at) }}</p>
             </div>
             <div class="field">
               <label>{{ $t('project.updatedAt') }}</label>
-              <p>{{ formatDate(project?.updatedAt) }}</p>
+              <p>{{ formatDate(project?.updated_at) }}</p>
             </div>
           </template>
         </Card>
@@ -109,46 +121,53 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useProjectStore } from '@/stores/project'
-import { useToast } from 'primevue/usetoast'
-import { useConfirm } from 'primevue/useconfirm'
-import CptTestList from '@/components/cpt/CptTestList.vue'
-import ProjectForm from '@/components/project/ProjectForm.vue'
-import SoilLayerList from '@/components/soil/SoilLayerList.vue'
+import { ref, onMounted } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useProjectStore } from '@/stores/project.store';
+import { useToast } from 'primevue/usetoast';
+import { useConfirm } from 'primevue/useconfirm';
+import CptTestList from '@/components/cpt/CptTestList.vue';
+import ProjectForm from '@/components/project/ProjectForm.vue';
+import SoilLayerList from '@/components/soil/SoilLayerList.vue';
+import Card from 'primevue/card';
+import Button from 'primevue/button';
+import Dialog from 'primevue/dialog';
+import ConfirmDialog from 'primevue/confirmdialog';
+import TabView from 'primevue/tabview';
+import TabPanel from 'primevue/tabpanel';
+import Tag from 'primevue/tag';
 
-const route = useRoute()
-const router = useRouter()
-const projectStore = useProjectStore()
-const toast = useToast()
-const confirm = useConfirm()
+const route = useRoute();
+const router = useRouter();
+const projectStore = useProjectStore();
+const toast = useToast();
+const confirm = useConfirm();
 
-const projectId = route.params.id
-const project = ref(null)
+const projectId = route.params.id;
+const project = ref(null);
 const statistics = ref({
   totalCptTests: 0,
-  totalSoilLayers: 0
-})
-const showFormDialog = ref(false)
+  totalSoilLayers: 0,
+});
+const showFormDialog = ref(false);
 
 const loadProject = async () => {
   try {
-    project.value = await projectStore.getProjectById(projectId)
-    statistics.value = await projectStore.getProjectStatistics(projectId)
+    project.value = await projectStore.fetchProject(projectId);
+    statistics.value = await projectStore.getProjectStatistics(projectId);
   } catch (error) {
     toast.add({
       severity: 'error',
       summary: 'Error',
       detail: error.message || 'Failed to load project details',
-      life: 3000
-    })
+      life: 3000,
+    });
   }
-}
+};
 
 const handleEdit = () => {
-  showFormDialog.value = true
-}
+  showFormDialog.value = true;
+};
 
 const handleDelete = () => {
   confirm.require({
@@ -158,39 +177,54 @@ const handleDelete = () => {
     acceptClass: 'p-button-danger',
     accept: async () => {
       try {
-        await projectStore.deleteProject(projectId)
+        await projectStore.deleteProject(projectId);
         toast.add({
           severity: 'success',
           summary: 'Success',
           detail: 'Project deleted successfully',
-          life: 3000
-        })
-        router.push('/projects')
+          life: 3000,
+        });
+        router.push('/projects');
       } catch (error) {
         toast.add({
           severity: 'error',
           summary: 'Error',
           detail: error.message || 'Failed to delete project',
-          life: 3000
-        })
+          life: 3000,
+        });
       }
-    }
-  })
-}
+    },
+  });
+};
 
 const handleSaved = () => {
-  showFormDialog.value = false
-  loadProject()
-}
+  showFormDialog.value = false;
+  loadProject();
+};
 
 const formatDate = (date) => {
-  if (!date) return ''
-  return new Date(date).toLocaleDateString()
-}
+  if (!date) return '-';
+  return new Date(date).toLocaleDateString();
+};
+
+const getStatusSeverity = (status) => {
+  switch (status) {
+    case 'active':
+      return 'success';
+    case 'completed':
+      return 'info';
+    case 'on_hold':
+      return 'warning';
+    case 'cancelled':
+      return 'danger';
+    default:
+      return null;
+  }
+};
 
 onMounted(() => {
-  loadProject()
-})
+  loadProject();
+});
 </script>
 
 <style scoped>
@@ -236,4 +270,4 @@ onMounted(() => {
 .stat-label {
   color: var(--text-color-secondary);
 }
-</style> 
+</style>

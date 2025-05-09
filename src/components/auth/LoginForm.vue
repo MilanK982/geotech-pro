@@ -7,16 +7,15 @@
       <template #content>
         <form @submit.prevent="handleSubmit" class="p-fluid">
           <div class="field">
-            <label for="email">{{ $t('common.email') }}</label>
+            <label for="username">{{ $t('common.username') }}</label>
             <InputText
-              id="email"
-              v-model="email"
-              type="email"
-              :class="{ 'p-invalid': submitted && !email }"
+              id="username"
+              v-model="username"
+              :class="{ 'p-invalid': submitted && !username }"
               required
             />
-            <small class="p-error" v-if="submitted && !email">
-              {{ $t('validation.emailRequired') }}
+            <small class="p-error" v-if="submitted && !username">
+              {{ $t('validation.usernameRequired') }}
             </small>
           </div>
 
@@ -77,7 +76,7 @@ const router = useRouter();
 const authStore = useAuthStore();
 const toast = useToast();
 
-const email = ref('');
+const username = ref('');
 const password = ref('');
 const rememberMe = ref(false);
 const submitted = ref(false);
@@ -86,10 +85,10 @@ const loading = ref(false);
 const handleSubmit = async () => {
   submitted.value = true;
 
-  if (email.value && password.value) {
+  if (username.value && password.value) {
     loading.value = true;
     try {
-      await authStore.login(email.value, password.value);
+      await authStore.login(username.value, password.value);
       toast.add({
         severity: 'success',
         summary: 'Success',

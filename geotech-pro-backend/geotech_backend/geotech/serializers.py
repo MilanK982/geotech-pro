@@ -1,7 +1,41 @@
 # geotech/serializers.py
 from rest_framework import serializers
-from .models import GeotechnicalModel, Layer, CptTest, CptData
+from .models import GeotechnicalModel, Layer, CptTest, CptData, Project
 from django.contrib.auth.models import User
+
+class ProjectSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
+    models_count = serializers.SerializerMethodField()
+    cpt_tests_count = serializers.SerializerMethodField()
+    layers_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Project
+        fields = ['id', 'name', 'description', 'location', 'client', 'status', 
+                 'start_date', 'end_date', 'created_at', 'updated_at', 'user',
+                 'models_count', 'cpt_tests_count', 'layers_count']
+
+    def get_models_count(self, obj):
+        try:
+            return obj.models.count()
+        except Exception:
+            return 0
+
+    def get_cpt_tests_count(self, obj):
+        try:
+            return CptTest.objects.filter(model__project=obj).count()
+        except Exception:
+            return 0
+
+    def get_layers_count(self, obj):
+        try:
+            return Layer.objects.filter(model__project=obj).count()
+        except Exception:
+            return 0
+
+    def create(self, validated_data):
+        validated_data['user'] = self.context['request'].user
+        return super().create(validated_data)
 
 class CptDataSerializer(serializers.ModelSerializer):
     class Meta:
@@ -70,25 +104,22 @@ class GeotechnicalModelSerializer(serializers.ModelSerializer):
         return model
 
     def update(self, instance, validated_data):
-        # Ažuriramo osnovne podatke modela
         instance.name = validated_data.get('name', instance.name)
         instance.npv = validated_data.get('npv', instance.npv)
         instance.npv_max = validated_data.get('npv_max', instance.npv_max)
         instance.save()
 
-        # Ažuriramo slojeve samo ako su prisutni u podacima
         if 'layers' in validated_data:
             instance.layers.all().delete()
             for layer_data in validated_data['layers']:
                 Layer.objects.create(model=instance, **layer_data)
 
-        # Ažuriramo CPT testove samo ako su prisutni u podacima
         if 'cpt_tests' in validated_data:
             instance.cpt_tests.all().delete()
             for cpt_test_data in validated_data['cpt_tests']:
                 data = cpt_test_data.pop('data', [])
                 cpt_test = CptTest.objects.create(model=instance, **cpt_test_data)
                 for item in data:
-                    CptData.objects.create(cpt_test=cpt_test, **item)
+                    CptData.objects.create(cpt_test=instance, **item)
 
         return instance
