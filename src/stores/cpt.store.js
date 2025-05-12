@@ -1,12 +1,12 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { useToast } from 'primevue/usetoast'
+import api from '@/services/api'
+import { showErrorToast, showSuccessToast } from '@/utils/toast'
 
 export const useCptStore = defineStore('cpt', () => {
   const tests = ref([])
   const loading = ref(false)
   const error = ref(null)
-  const toast = useToast()
 
   // Getters
   const getTestsByProject = computed(() => (projectId) => {
@@ -22,18 +22,13 @@ export const useCptStore = defineStore('cpt', () => {
     loading.value = true
     error.value = null
     try {
-      // TODO: Replace with actual API call
-      const response = await fetch(`/api/projects/${projectId}/cpt-tests`)
-      const data = await response.json()
-      tests.value = data
+      const response = await api.get(`/projects/${projectId}/cpt-tests/`)
+      tests.value = response.data
+      return response.data
     } catch (err) {
       error.value = err.message
-      toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'Failed to fetch CPT tests',
-        life: 3000
-      })
+      showErrorToast(err, 'Failed to fetch CPT tests')
+      throw err
     } finally {
       loading.value = false
     }
@@ -43,19 +38,13 @@ export const useCptStore = defineStore('cpt', () => {
     loading.value = true
     error.value = null
     try {
-      // TODO: Replace with actual API call
-      const response = await fetch(`/api/projects/${projectId}/cpt-tests`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(testData)
-      })
-      const newTest = await response.json()
-      tests.value.push(newTest)
-      return newTest
+      const response = await api.post(`/projects/${projectId}/cpt-tests/`, testData)
+      tests.value.push(response.data)
+      showSuccessToast('CPT test created successfully')
+      return response.data
     } catch (err) {
       error.value = err.message
+      showErrorToast(err, 'Failed to create CPT test')
       throw err
     } finally {
       loading.value = false
@@ -66,22 +55,16 @@ export const useCptStore = defineStore('cpt', () => {
     loading.value = true
     error.value = null
     try {
-      // TODO: Replace with actual API call
-      const response = await fetch(`/api/projects/${projectId}/cpt-tests/${testId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(testData)
-      })
-      const updatedTest = await response.json()
+      const response = await api.put(`/projects/${projectId}/cpt-tests/${testId}/`, testData)
       const index = tests.value.findIndex(test => test.id === testId)
       if (index !== -1) {
-        tests.value[index] = updatedTest
+        tests.value[index] = response.data
       }
-      return updatedTest
+      showSuccessToast('CPT test updated successfully')
+      return response.data
     } catch (err) {
       error.value = err.message
+      showErrorToast(err, 'Failed to update CPT test')
       throw err
     } finally {
       loading.value = false
@@ -92,13 +75,12 @@ export const useCptStore = defineStore('cpt', () => {
     loading.value = true
     error.value = null
     try {
-      // TODO: Replace with actual API call
-      await fetch(`/api/projects/${projectId}/cpt-tests/${testId}`, {
-        method: 'DELETE'
-      })
+      await api.delete(`/projects/${projectId}/cpt-tests/${testId}/`)
       tests.value = tests.value.filter(test => test.id !== testId)
+      showSuccessToast('CPT test deleted successfully')
     } catch (err) {
       error.value = err.message
+      showErrorToast(err, 'Failed to delete CPT test')
       throw err
     } finally {
       loading.value = false
@@ -112,19 +94,20 @@ export const useCptStore = defineStore('cpt', () => {
       const formData = new FormData()
       formData.append('file', file)
 
-      // TODO: Replace with actual API call
-      const response = await fetch(`/api/projects/${projectId}/cpt-tests/${testId}/import`, {
-        method: 'POST',
-        body: formData
+      const response = await api.post(`/projects/${projectId}/cpt-tests/${testId}/import/`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
       })
-      const updatedTest = await response.json()
       const index = tests.value.findIndex(test => test.id === testId)
       if (index !== -1) {
-        tests.value[index] = updatedTest
+        tests.value[index] = response.data
       }
-      return updatedTest
+      showSuccessToast('CPT data imported successfully')
+      return response.data
     } catch (err) {
       error.value = err.message
+      showErrorToast(err, 'Failed to import CPT data')
       throw err
     } finally {
       loading.value = false
@@ -135,10 +118,10 @@ export const useCptStore = defineStore('cpt', () => {
     loading.value = true
     error.value = null
     try {
-      // TODO: Replace with actual API call
-      const response = await fetch(`/api/projects/${projectId}/cpt-tests/${testId}/export`)
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
+      const response = await api.get(`/projects/${projectId}/cpt-tests/${testId}/export/`, {
+        responseType: 'blob'
+      })
+      const url = window.URL.createObjectURL(response.data)
       const a = document.createElement('a')
       a.href = url
       a.download = `cpt-test-${testId}.csv`
@@ -146,8 +129,10 @@ export const useCptStore = defineStore('cpt', () => {
       a.click()
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
+      showSuccessToast('CPT data exported successfully')
     } catch (err) {
       error.value = err.message
+      showErrorToast(err, 'Failed to export CPT data')
       throw err
     } finally {
       loading.value = false

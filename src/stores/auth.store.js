@@ -1,9 +1,10 @@
 import { defineStore } from 'pinia';
-import authService from '../services/auth.service';
+import AuthService from '@/services/auth.service';
+import { showErrorToast, showSuccessToast } from '@/utils/toast';
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
-    user: authService.getCurrentUser(),
+    user: JSON.parse(localStorage.getItem('user')),
     loading: false,
     error: null
   }),
@@ -18,11 +19,12 @@ export const useAuthStore = defineStore('auth', {
       this.loading = true;
       this.error = null;
       try {
-        const user = await authService.login(username, password);
-        this.user = user;
-        return user;
+        const userData = await AuthService.login(username, password);
+        this.user = userData;
+        showSuccessToast('Login successful');
       } catch (error) {
-        this.error = error.response?.data?.message || 'Login failed';
+        this.error = error.message;
+        showErrorToast(error, 'Login failed');
         throw error;
       } finally {
         this.loading = false;
@@ -33,10 +35,12 @@ export const useAuthStore = defineStore('auth', {
       this.loading = true;
       this.error = null;
       try {
-        const response = await authService.register(email, password, fullName);
-        return response.data;
+        const userData = await AuthService.register(email, password, fullName);
+        this.user = userData;
+        showSuccessToast('Registration successful');
       } catch (error) {
-        this.error = error.response?.data?.message || 'Registration failed';
+        this.error = error.message;
+        showErrorToast(error, 'Registration failed');
         throw error;
       } finally {
         this.loading = false;
@@ -44,8 +48,9 @@ export const useAuthStore = defineStore('auth', {
     },
 
     logout() {
-      authService.logout();
+      AuthService.logout();
       this.user = null;
+      showSuccessToast('Logout successful');
     }
   }
 }); 

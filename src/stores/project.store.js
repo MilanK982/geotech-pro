@@ -9,6 +9,7 @@ import {
   getProjectStats,
   getProjectStatistics,
 } from '@/services/project.service';
+import { showErrorToast, showSuccessToast } from '@/utils/toast';
 
 export const useProjectStore = defineStore('project', {
   state: () => ({
@@ -25,7 +26,7 @@ export const useProjectStore = defineStore('project', {
     },
     recentProjects: (state) => {
       return [...state.projects]
-        .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
+        .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
         .slice(0, 5);
     },
   },
@@ -38,7 +39,8 @@ export const useProjectStore = defineStore('project', {
         const projects = await getProjects();
         this.projects = projects;
       } catch (error) {
-        this.error = error.message || 'Failed to fetch projects';
+        this.error = error.message;
+        showErrorToast(error, 'Failed to fetch projects');
         throw error;
       } finally {
         this.loading = false;
@@ -53,7 +55,8 @@ export const useProjectStore = defineStore('project', {
         this.currentProject = project;
         return project;
       } catch (error) {
-        this.error = error.message || 'Failed to fetch project';
+        this.error = error.message;
+        showErrorToast(error, 'Failed to fetch project');
         throw error;
       } finally {
         this.loading = false;
@@ -80,9 +83,11 @@ export const useProjectStore = defineStore('project', {
       try {
         const project = await createProject(projectData);
         this.projects.push(project);
+        showSuccessToast('Project created successfully');
         return project;
       } catch (error) {
-        this.error = error.message || 'Failed to create project';
+        this.error = error.message;
+        showErrorToast(error, 'Failed to create project');
         throw error;
       } finally {
         this.loading = false;
@@ -93,17 +98,19 @@ export const useProjectStore = defineStore('project', {
       this.loading = true;
       this.error = null;
       try {
-        const updatedProject = await updateProject(id, projectData);
+        const project = await updateProject(id, projectData);
         const index = this.projects.findIndex((p) => p.id === id);
         if (index !== -1) {
-          this.projects[index] = updatedProject;
+          this.projects[index] = project;
         }
         if (this.currentProject?.id === id) {
-          this.currentProject = updatedProject;
+          this.currentProject = project;
         }
-        return updatedProject;
+        showSuccessToast('Project updated successfully');
+        return project;
       } catch (error) {
-        this.error = error.message || 'Failed to update project';
+        this.error = error.message;
+        showErrorToast(error, 'Failed to update project');
         throw error;
       } finally {
         this.loading = false;
@@ -119,9 +126,10 @@ export const useProjectStore = defineStore('project', {
         if (this.currentProject?.id === id) {
           this.currentProject = null;
         }
-        await this.fetchProjectStats();
+        showSuccessToast('Project deleted successfully');
       } catch (error) {
-        this.error = error.message || 'Failed to delete project';
+        this.error = error.message;
+        showErrorToast(error, 'Failed to delete project');
         throw error;
       } finally {
         this.loading = false;
@@ -136,7 +144,8 @@ export const useProjectStore = defineStore('project', {
         this.stats = stats;
         return stats;
       } catch (error) {
-        this.error = error.message || 'Failed to fetch project stats';
+        this.error = error.message;
+        showErrorToast(error, 'Failed to fetch project statistics');
         throw error;
       } finally {
         this.loading = false;
