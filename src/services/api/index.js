@@ -38,35 +38,4 @@ api.interceptors.response.use(
   }
 )
 
-// Layer and CPT specific functions
-export const fetchLayers = async (modelId) => {
-  try {
-    const response = await api.get(`/get_layers/${modelId}/`)
-    return response.data
-  } catch (error) {
-    console.error('Error fetching layers:', error)
-    throw error
-  }
-}
-
-export const saveLayers = async (modelId, data) => {
-  try {
-    const response = await api.post(`/save_layers/${modelId}/`, data)
-    return response.data
-  } catch (error) {
-    console.error('Error saving layers:', error)
-    throw error
-  }
-}
-
-export const saveCpt = async (modelId, data) => {
-  try {
-    const response = await api.post(`/save_cpt/${modelId}/`, data)
-    return response.data
-  } catch (error) {
-    console.error('Error saving CPT:', error)
-    throw error
-  }
-}
-
 export default api 

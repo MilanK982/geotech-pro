@@ -127,10 +127,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
+import { debounce } from 'lodash';
 import { useProjectStore } from '@/stores/project.store';
 import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
+import { showErrorToast, showSuccessToast } from '@/utils/toast';
 import { useRouter } from 'vue-router';
 import { FilterMatchMode } from 'primevue/api';
 
@@ -146,21 +148,26 @@ const filters = ref({
 
 const projects = computed(() => projectStore.projects);
 
-onMounted(async () => {
+const filters = ref({
+  global: { value: null, matchMode: FilterMatchMode.CONTAINS }
+});
+
+const debouncedFetchProjects = debounce(async () => {
   try {
     loading.value = true;
     await projectStore.fetchProjects();
   } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: error.message || 'Failed to load projects',
-      life: 3000
-    });
+    showErrorToast(error, 'Failed to load projects');
   } finally {
     loading.value = false;
   }
+}, 300);
+
+watch(() => filters.value.global.value, () => {
+  debouncedFetchProjects();
 });
+
+onMounted(debouncedFetchProjects);
 
 const formatDate = (date) => {
   if (!date) return '-';
@@ -199,21 +206,12 @@ const confirmDelete = (project) => {
 const deleteProject = async (project) => {
   try {
     await projectStore.deleteProject(project.id);
-    toast.add({
-      severity: 'success',
-      summary: 'Success',
-      detail: 'Project deleted successfully',
-      life: 3000
-    });
+    showSuccessToast('Project deleted successfully');
   } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: error.message || 'Failed to delete project',
-      life: 3000
-    });
+    showErrorToast(error, 'Failed to delete project');
   }
 };
+
 </script>
 
 <style scoped>

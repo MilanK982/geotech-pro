@@ -13,7 +13,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/geotech': { // Changed from '/api'
-        target: 'http://localhost:8000',
+        target: process.env.VITE_API_URL || 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
         logLevel: 'debug', // Add for debugging

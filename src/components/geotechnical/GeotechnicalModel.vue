@@ -24,7 +24,7 @@ import TabPanel from 'primevue/tabpanel';
 import LayerTable from './LayerTable.vue';
 import GroundWater from './GroundWater.vue';
 import CptTable from './CptTable.vue';
-import { useGeotechnicalStore } from '../../store/geotechnical';
+import { useGeotechnicalStore } from '@/stores/geotechnical.store';
 
 const props = defineProps({
   modelId: {

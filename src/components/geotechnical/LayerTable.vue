@@ -13,8 +13,8 @@ import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { TabulatorFull as Tabulator } from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';
 import Button from 'primevue/button';
-import { useGeotechnicalStore } from '../../store/geotechnical';
-import { fetchLayers, saveLayers } from '../../services/api';
+import { useGeotechnicalStore } from '@/stores/geotechnical.store';
+import { fetchLayers, saveLayers } from '@/services/project.service';
 
 const props = defineProps({
   modelId: {

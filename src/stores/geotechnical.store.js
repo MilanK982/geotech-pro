@@ -6,9 +6,10 @@ export const useGeotechnicalStore = defineStore('geotechnical', {
     currentProjectId: null,
     layers: [],
     cptTests: [],
-    npv: 0,
-    npvMax: 0,
-    groundwater: null,
+    groundwater: {
+      npv: 0,
+      npvMax: 0,
+    },
     cptDataCache: new Map()
   }),
 
@@ -21,8 +22,8 @@ export const useGeotechnicalStore = defineStore('geotechnical', {
       this.layers = layers;
     },
 
-    updateGroundwater(groundwater) {
-      this.groundwater = groundwater;
+    updateGroundwater(data) {
+      this.groundwater = { ...this.groundwater, ...data };
     },
 
     setLayers(layers) {

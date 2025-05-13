@@ -4,7 +4,7 @@
   
   <script>
   import { Tree } from 'primevue/tree';
-  import { useProjectStore } from '../../store/modules/project';
+  import { useProjectStore } from '@/stores/project.store';
   
   export default {
     components: { Tree },

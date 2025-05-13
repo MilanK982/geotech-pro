@@ -33,7 +33,7 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch, nextTick, onActivated, onDeactivated, computed } from 'vue';
-import { useGeotechnicalStore } from '../../store/geotechnical';
+import { useGeotechnicalStore } from '@/stores/geotechnical.store';
 import { fetchLayers, saveCpt } from '../../services/api';
 import { TabulatorFull as Tabulator } from 'tabulator-tables';
 import 'tabulator-tables/dist/css/tabulator.min.css';

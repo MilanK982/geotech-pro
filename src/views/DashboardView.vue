@@ -116,6 +116,7 @@
 import { ref, onMounted, computed } from 'vue'; // Added computed
 import { useProjectStore } from '@/stores/project.store';
 import { useToast } from 'primevue/usetoast';
+import { showErrorToast, showSuccessToast } from '@/utils/toast';
 import { useConfirm } from 'primevue/useconfirm';
 import { useRouter } from 'vue-router';
 import Card from 'primevue/card';
@@ -176,19 +177,9 @@ const confirmDelete = (project) => {
     accept: async () => {
       try {
         await projectStore.deleteProject(project.id);
-        toast.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: 'Project deleted successfully',
-          life: 3000,
-        });
+        showSuccessToast('Project deleted successfully');
       } catch (error) {
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: error.message || 'Failed to delete project',
-          life: 3000,
-        });
+        showErrorToast(error, 'Failed to delete project');
       }
     },
   });
@@ -200,16 +191,12 @@ onMounted(async () => {
     await projectStore.fetchProjects();
     await projectStore.fetchProjectStats();
   } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: error.message || 'Failed to load dashboard data',
-      life: 3000,
-    });
+    showErrorToast(error, 'Failed to load dashboard data');
   } finally {
     loading.value = false;
   }
 });
+
 </script>
 
 <style scoped>

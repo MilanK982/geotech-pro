@@ -125,6 +125,7 @@ import { ref, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useProjectStore } from '@/stores/project.store';
 import { useToast } from 'primevue/usetoast';
+import { showErrorToast, showSuccessToast } from '@/utils/toast';
 import { useConfirm } from 'primevue/useconfirm';
 import CptTestList from '@/components/cpt/CptTestList.vue';
 import ProjectForm from '@/components/project/ProjectForm.vue';
@@ -156,12 +157,7 @@ const loadProject = async () => {
     project.value = await projectStore.fetchProject(projectId);
     statistics.value = await projectStore.getProjectStatistics(projectId);
   } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: error.message || 'Failed to load project details',
-      life: 3000,
-    });
+    showErrorToast(error, 'Failed to load project details');
   }
 };
 
@@ -178,20 +174,10 @@ const handleDelete = () => {
     accept: async () => {
       try {
         await projectStore.deleteProject(projectId);
-        toast.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: 'Project deleted successfully',
-          life: 3000,
-        });
+        showSuccessToast('Project deleted successfully');
         router.push('/projects');
       } catch (error) {
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: error.message || 'Failed to delete project',
-          life: 3000,
-        });
+        showErrorToast(error, 'Failed to delete project');
       }
     },
   });

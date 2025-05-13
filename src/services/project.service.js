@@ -1,15 +1,5 @@
 // src/services/project.service.js
 import api from './api'
-import { fetchLayers, saveLayers, saveCpt } from './api'
-
-const getCsrfToken = () => {
-  const name = 'csrftoken';
-  const cookieValue = document.cookie
-    .split('; ')
-    .find((row) => row.startsWith(name))
-    ?.split('=')[1];
-  return cookieValue || '';
-};
 
 const getAuthHeaders = () => {
   const authStore = useAuthStore();
@@ -58,5 +48,33 @@ export const getProjectStats = async (projectId = null) => {
   return response.data
 }
 
-// Re-export layer and CPT functions
-export { fetchLayers, saveLayers, saveCpt }
+// Layer and CPT specific functions
+export const fetchLayers = async (modelId) => {
+  try {
+    const response = await api.get(`/get_layers/${modelId}/`)
+    return response.data
+  } catch (error) {
+    console.error('Error fetching layers:', error)
+    throw error
+  }
+}
+
+export const saveLayers = async (modelId, data) => {
+  try {
+    const response = await api.post(`/save_layers/${modelId}/`, data)
+    return response.data
+  } catch (error) {
+    console.error('Error saving layers:', error)
+    throw error
+  }
+}
+
+export const saveCpt = async (modelId, data) => {
+  try {
+    const response = await api.post(`/save_cpt/${modelId}/`, data)
+    return response.data
+  } catch (error) {
+    console.error('Error saving CPT:', error)
+    throw error
+  }
+}
