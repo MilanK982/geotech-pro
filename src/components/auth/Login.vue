@@ -98,10 +98,10 @@ const handleLogin = async () => {
     loading.value = true;
     try {
       await authStore.login(username.value, password.value);
-      showSuccessToast('Login successful');
+      showSuccessToast(toast, 'Login successful');
       router.push('/dashboard');
     } catch (error) {
-      showErrorToast(error, 'Login failed');
+      showErrorToast(toast, error, 'Login failed');
     } finally {
       loading.value = false;
     }

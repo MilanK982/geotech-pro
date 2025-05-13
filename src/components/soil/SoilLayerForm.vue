@@ -105,11 +105,12 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
-import { useVuelidate } from '@vuelidate/core'
-import { required } from '@vuelidate/validators'
-import { useSoilStore } from '@/stores/soil'
-import { useToast } from 'primevue/usetoast'
+import { ref, computed, watch } from 'vue';
+import { useVuelidate } from '@vuelidate/core';
+import { required } from '@vuelidate/validators';
+import { useSoilStore } from '@/stores/soil';
+import { useToast } from 'primevue/usetoast';
+import { showErrorToast, showSuccessToast } from '@/utils/toast';
 
 const props = defineProps({
   projectId: {
@@ -155,51 +156,30 @@ const soilTypes = [
 ]
 
 const handleSubmit = async () => {
-  const isValid = await v$.value.$validate()
-  if (!isValid) return
+  const isValid = await v$.value.$validate();
+  if (!isValid) return;
 
-  // Validate layer depths
   if (!soilStore.validateLayerDepths(formData.value)) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: $t('validation.bottomDepthGreaterThanTop'),
-      life: 3000
-    })
-    return
+    showErrorToast(new Error('Invalid depths'), 'Bottom depth must be greater than top depth');
+    return;
   }
 
-  loading.value = true
+  loading.value = true;
   try {
     if (props.layerId) {
-      await soilStore.updateLayer(props.projectId, props.layerId, formData.value)
-      toast.add({
-        severity: 'success',
-        summary: 'Success',
-        detail: $t('soil.updateSuccess'),
-        life: 3000
-      })
+      await soilStore.updateLayer(props.projectId, props.layerId, formData.value);
+      showSuccessToast('Soil layer updated successfully');
     } else {
-      await soilStore.createLayer(props.projectId, formData.value)
-      toast.add({
-        severity: 'success',
-        summary: 'Success',
-        detail: $t('soil.createSuccess'),
-        life: 3000
-      })
+      await soilStore.createLayer(props.projectId, formData.value);
+      showSuccessToast('Soil layer created successfully');
     }
-    emit('saved')
+    emit('saved');
   } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: error.message || $t('soil.saveError'),
-      life: 3000
-    })
+    showErrorToast(error, 'Failed to save soil layer');
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 // Calculate thickness when depths change
 watch([() => formData.value.topDepth, () => formData.value.bottomDepth], () => {

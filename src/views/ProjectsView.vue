@@ -36,7 +36,7 @@
           </template>
 
           <Column
-            :field="'name'"
+            field="name"
             :header="$t('projects.projectName')"
             sortable
             style="min-width: 200px"
@@ -52,20 +52,20 @@
           </Column>
 
           <Column
-            :field="'description'"
+            field="description"
             :header="$t('projects.projectDescription')"
             style="min-width: 300px"
           />
 
           <Column
-            :field="'location'"
+            field="location"
             :header="$t('projects.location')"
             sortable
             style="min-width: 150px"
           />
 
           <Column
-            :field="'status'"
+            field="status"
             :header="$t('projects.status')"
             sortable
             style="min-width: 120px"
@@ -79,7 +79,7 @@
           </Column>
 
           <Column
-            :field="'startDate'"
+            field="startDate"
             :header="$t('projects.startDate')"
             sortable
             style="min-width: 120px"
@@ -90,7 +90,7 @@
           </Column>
 
           <Column
-            :field="'endDate'"
+            field="endDate"
             :header="$t('projects.endDate')"
             sortable
             style="min-width: 120px"
@@ -101,7 +101,7 @@
           </Column>
 
           <Column
-            :field="'actions'"
+            field="actions"
             :header="$t('projects.actions')"
             style="min-width: 100px"
           >
@@ -128,7 +128,6 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { debounce } from 'lodash';
 import { useProjectStore } from '@/stores/project.store';
 import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
@@ -143,16 +142,12 @@ const router = useRouter();
 
 const loading = ref(false);
 const filters = ref({
-  global: { value: null, matchMode: FilterMatchMode.CONTAINS }
+  global: { value: null, matchMode: FilterMatchMode.CONTAINS },
 });
 
 const projects = computed(() => projectStore.projects);
 
-const filters = ref({
-  global: { value: null, matchMode: FilterMatchMode.CONTAINS }
-});
-
-const debouncedFetchProjects = debounce(async () => {
+onMounted(async () => {
   try {
     loading.value = true;
     await projectStore.fetchProjects();
@@ -161,13 +156,7 @@ const debouncedFetchProjects = debounce(async () => {
   } finally {
     loading.value = false;
   }
-}, 300);
-
-watch(() => filters.value.global.value, () => {
-  debouncedFetchProjects();
 });
-
-onMounted(debouncedFetchProjects);
 
 const formatDate = (date) => {
   if (!date) return '-';
@@ -199,7 +188,7 @@ const confirmDelete = (project) => {
     header: 'Delete Confirmation',
     icon: 'pi pi-exclamation-triangle',
     accept: () => deleteProject(project),
-    reject: () => {}
+    reject: () => {},
   });
 };
 
@@ -211,7 +200,6 @@ const deleteProject = async (project) => {
     showErrorToast(error, 'Failed to delete project');
   }
 };
-
 </script>
 
 <style scoped>
@@ -230,4 +218,4 @@ const deleteProject = async (project) => {
 :deep(.p-datatable .p-datatable-tbody > tr > td) {
   padding: 0.5rem;
 }
-</style> 
+</style>

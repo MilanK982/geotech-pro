@@ -7,6 +7,7 @@ const getAuthHeaders = () => {
 };
 
 export const getProjects = async () => {
+  console.log('Fetching projects from:', api.defaults.baseURL + '/projects/');
   const response = await api.get('/projects/')
   return response.data
 }

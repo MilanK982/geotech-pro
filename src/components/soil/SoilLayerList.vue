@@ -43,13 +43,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
-import { Tabulator } from 'tabulator-tables'
-import { useSoilStore } from '@/stores/soil'
-import { useToast } from 'primevue/usetoast'
-import { useConfirm } from 'primevue/useconfirm'
-import SoilLayerForm from './SoilLayerForm.vue'
-import SoilLayerPlot from './SoilLayerPlot.vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { Tabulator } from 'tabulator-tables';
+import { useSoilStore } from '@/stores/soil';
+import { useToast } from 'primevue/usetoast';
+import { showErrorToast, showSuccessToast } from '@/utils/toast';
+import { useConfirm } from 'primevue/useconfirm';
+import SoilLayerForm from './SoilLayerForm.vue';
+import SoilLayerPlot from './SoilLayerPlot.vue';
 
 const props = defineProps({
   projectId: {
@@ -117,7 +118,7 @@ const tableConfig = {
       cellClick: (e, cell) => {
         const row = cell.getRow()
         const data = row.getData()
-        handleEdit(data)
+        handleDelete(data)
       }
     }
   ],
@@ -130,73 +131,59 @@ const tableConfig = {
 
 const loadLayers = async () => {
   try {
-    await soilStore.fetchLayersByProject(props.projectId)
-    table.value.setData(soilStore.layers)
+    await soilStore.fetchLayersByProject(props.projectId);
+    table.value.setData(soilStore.layers);
   } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: error.message || 'Failed to load soil layers',
-      life: 3000
-    })
+    showErrorToast(error, 'Failed to load soil layers');
   }
-}
+};
 
 const handleNewLayer = () => {
-  isEditing.value = false
-  selectedLayerId.value = null
-  showFormDialog.value = true
-}
+  isEditing.value = false;
+  selectedLayerId.value = null;
+  showFormDialog.value = true;
+};
 
 const handleEdit = (layer) => {
-  isEditing.value = true
-  selectedLayerId.value = layer.id
-  showFormDialog.value = true
-}
+  isEditing.value = true;
+  selectedLayerId.value = layer.id;
+  showFormDialog.value = true;
+};
 
 const handleDelete = (layer) => {
   confirm.require({
-    message: $t('soil.deleteConfirmation.message'),
-    header: $t('soil.deleteConfirmation.header'),
+    message: 'Are you sure you want to delete this soil layer?',
+    header: 'Delete Confirmation',
     icon: 'pi pi-exclamation-triangle',
     acceptClass: 'p-button-danger',
     accept: async () => {
       try {
-        await soilStore.deleteLayer(props.projectId, layer.id)
-        toast.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: 'Soil layer deleted successfully',
-          life: 3000
-        })
-        loadLayers()
+        await soilStore.deleteLayer(props.projectId, layer.id);
+        showSuccessToast('Soil layer deleted successfully');
+        loadLayers();
       } catch (error) {
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: error.message || 'Failed to delete soil layer',
-          life: 3000
-        })
+        showErrorToast(error, 'Failed to delete soil layer');
       }
-    }
-  })
-}
+    },
+  });
+};
 
 const handleSaved = () => {
-  showFormDialog.value = false
-  loadLayers()
-}
+  showFormDialog.value = false;
+  loadLayers();
+  showSuccessToast('Soil layer saved successfully');
+};
 
 onMounted(() => {
-  table.value = new Tabulator(tableRef.value, tableConfig)
-  loadLayers()
-})
+  table.value = new Tabulator(tableRef.value, tableConfig);
+  loadLayers();
+});
 
 onBeforeUnmount(() => {
   if (table.value) {
-    table.value.destroy()
+    table.value.destroy();
   }
-})
+});
 </script>
 
 <style scoped>

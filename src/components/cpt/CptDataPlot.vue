@@ -64,44 +64,36 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
-import { Chart, registerables } from 'chart.js'
-import { useCptStore } from '@/stores/cpt'
-import { useToast } from 'primevue/usetoast'
+import { ref, onMounted, watch } from 'vue';
+import { Chart, registerables } from 'chart.js';
+import { useCptStore } from '@/stores/cpt';
+import { useToast } from 'primevue/usetoast';
+import { showErrorToast, showSuccessToast } from '@/utils/toast';
 
-Chart.register(...registerables)
+Chart.register(...registerables);
 
 const props = defineProps({
-  projectId: {
-    type: String,
-    required: true
-  },
-  testId: {
-    type: String,
-    required: true
-  },
-  visible: {
-    type: Boolean,
-    required: true
-  }
-})
+  projectId: { type: String, required: true },
+  testId: { type: String, required: true },
+  visible: { type: Boolean, required: true },
+});
 
-const emit = defineEmits(['update:visible'])
+const emit = defineEmits(['update:visible']);
 
-const cptStore = useCptStore()
-const toast = useToast()
+const cptStore = useCptStore();
+const toast = useToast();
 
-const qcChart = ref(null)
-const fsChart = ref(null)
-const u2Chart = ref(null)
-const frChart = ref(null)
+const qcChart = ref(null);
+const fsChart = ref(null);
+const u2Chart = ref(null);
+const frChart = ref(null);
 
 let charts = {
   qc: null,
   fs: null,
   u2: null,
-  fr: null
-}
+  fr: null,
+};
 
 const chartOptions = {
   responsive: true,
@@ -111,16 +103,16 @@ const chartOptions = {
       reverse: true,
       title: {
         display: true,
-        text: 'Depth (m)'
-      }
-    }
+        text: 'Depth (m)',
+      },
+    },
   },
   plugins: {
     legend: {
-      display: false
-    }
-  }
-}
+      display: false,
+    },
+  },
+};
 
 const createChart = (canvas, data, label, color) => {
   return new Chart(canvas, {
@@ -132,90 +124,91 @@ const createChart = (canvas, data, label, color) => {
         borderColor: color,
         backgroundColor: color + '20',
         fill: true,
-        tension: 0.4
-      }]
+        tension: 0.4,
+      }],
     },
-    options: chartOptions
-  })
-}
+    options: chartOptions,
+  });
+};
 
 const calculateFrictionRatio = (data) => {
   return data.map(point => ({
     x: (point.fs / point.qc) * 100,
-    y: point.depth
-  }))
-}
+    y: point.depth,
+  }));
+};
 
 const initCharts = (data) => {
-  // Destroy existing charts
   Object.values(charts).forEach(chart => {
-    if (chart) chart.destroy()
-  })
+    if (chart) chart.destroy();
+  });
 
-  // Create new charts
   charts.qc = createChart(
     qcChart.value,
     data.map(point => ({ x: point.qc, y: point.depth })),
     'Cone Resistance (MPa)',
     '#FF6384'
-  )
+  );
 
   charts.fs = createChart(
     fsChart.value,
     data.map(point => ({ x: point.fs, y: point.depth })),
     'Sleeve Friction (kPa)',
     '#36A2EB'
-  )
+  );
 
   charts.u2 = createChart(
     u2Chart.value,
     data.map(point => ({ x: point.u2, y: point.depth })),
     'Pore Pressure (kPa)',
     '#4BC0C0'
-  )
+  );
 
   charts.fr = createChart(
     frChart.value,
     calculateFrictionRatio(data),
     'Friction Ratio (%)',
     '#FFCE56'
-  )
-}
+  );
+};
 
 const handleClose = () => {
-  emit('update:visible', false)
-}
+  emit('update:visible', false);
+};
 
 const handleExport = () => {
-  // TODO: Implement plot export functionality
-  console.log('Export plots')
-}
+  try {
+    const canvas = qcChart.value; // Primer: izvoz prvog grafika
+    const link = document.createElement('a');
+    link.download = `cpt-plot-${props.testId}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    showSuccessToast('Plot exported successfully');
+  } catch (error) {
+    showErrorToast(error, 'Failed to export plot');
+  }
+};
 
 watch(() => props.visible, async (newValue) => {
   if (newValue && props.testId) {
-    const test = cptStore.getTestById(props.testId)
+    const test = cptStore.getTestById(props.testId);
     if (test && test.data && test.data.length > 0) {
-      initCharts(test.data)
+      initCharts(test.data);
     } else {
-      toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'No data available for plotting',
-        life: 3000
-      })
-      handleClose()
+      showErrorToast(new Error('No data available'), 'No data available for plotting');
+      handleClose();
     }
   }
-})
+});
 
 onMounted(() => {
   if (props.visible && props.testId) {
-    const test = cptStore.getTestById(props.testId)
+    const test = cptStore.getTestById(props.testId);
     if (test && test.data && test.data.length > 0) {
-      initCharts(test.data)
+      initCharts(test.data);
     }
   }
-})
+});
 </script>
 
 <style scoped>

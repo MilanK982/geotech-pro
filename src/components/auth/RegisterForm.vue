@@ -96,6 +96,7 @@ import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth.store';
 import { useToast } from 'primevue/usetoast';
+import { showErrorToast, showSuccessToast } from '@/utils/toast';
 import Card from 'primevue/card';
 import InputText from 'primevue/inputtext';
 import Password from 'primevue/password';
@@ -127,7 +128,6 @@ const passwordsMatch = computed(() => {
 
 const handleSubmit = async () => {
   submitted.value = true;
-
   if (
     fullName.value &&
     email.value &&
@@ -140,20 +140,10 @@ const handleSubmit = async () => {
     loading.value = true;
     try {
       await authStore.register(email.value, password.value, fullName.value);
-      toast.add({
-        severity: 'success',
-        summary: 'Success',
-        detail: 'Registration successful',
-        life: 3000
-      });
+      showSuccessToast(toast, 'Registration successful');
       router.push('/login');
     } catch (error) {
-      toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: error.message || 'Registration failed',
-        life: 3000
-      });
+      showErrorToast(toast, error, 'Registration failed');
     } finally {
       loading.value = false;
     }

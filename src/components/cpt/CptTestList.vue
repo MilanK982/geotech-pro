@@ -128,61 +128,54 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useCptStore } from '@/stores/cpt'
-import { useToast } from 'primevue/usetoast'
-import { useConfirm } from 'primevue/useconfirm'
-import CptTestForm from './CptTestForm.vue'
+import { ref, onMounted } from 'vue';
+import { useCptStore } from '@/stores/cpt';
+import { useToast } from 'primevue/usetoast';
+import { showErrorToast, showSuccessToast } from '@/utils/toast';
+import { useConfirm } from 'primevue/useconfirm';
+import CptTestForm from './CptTestForm.vue';
 
 const props = defineProps({
-  projectId: {
-    type: String,
-    required: true
-  }
-})
+  projectId: { type: String, required: true },
+});
 
-const cptStore = useCptStore()
-const toast = useToast()
-const confirm = useConfirm()
+const cptStore = useCptStore();
+const toast = useToast();
+const confirm = useConfirm();
 
-const loading = ref(false)
-const tests = ref([])
-const showFormDialog = ref(false)
-const isEditing = ref(false)
-const selectedTestId = ref(null)
+const loading = ref(false);
+const tests = ref([]);
+const showFormDialog = ref(false);
+const isEditing = ref(false);
+const selectedTestId = ref(null);
 
 const filters = ref({
   global: { value: null, matchMode: 'contains' },
-  testNumber: { value: null, matchMode: 'contains' }
-})
+  testNumber: { value: null, matchMode: 'contains' },
+});
 
 const loadTests = async () => {
-  loading.value = true
+  loading.value = true;
   try {
-    tests.value = await cptStore.getTestsByProject(props.projectId)
+    tests.value = await cptStore.getTestsByProject(props.projectId);
   } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: error.message || 'Failed to load CPT tests',
-      life: 3000
-    })
+    showErrorToast(error, 'Failed to load CPT tests');
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 const handleNewTest = () => {
-  isEditing.value = false
-  selectedTestId.value = null
-  showFormDialog.value = true
-}
+  isEditing.value = false;
+  selectedTestId.value = null;
+  showFormDialog.value = true;
+};
 
 const handleEdit = (test) => {
-  isEditing.value = true
-  selectedTestId.value = test.id
-  showFormDialog.value = true
-}
+  isEditing.value = true;
+  selectedTestId.value = test.id;
+  showFormDialog.value = true;
+};
 
 const handleDelete = (test) => {
   confirm.require({
@@ -192,39 +185,29 @@ const handleDelete = (test) => {
     acceptClass: 'p-button-danger',
     accept: async () => {
       try {
-        await cptStore.deleteTest(props.projectId, test.id)
-        toast.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: 'CPT test deleted successfully',
-          life: 3000
-        })
-        loadTests()
+        await cptStore.deleteTest(props.projectId, test.id);
+        showSuccessToast('CPT test deleted successfully');
+        loadTests();
       } catch (error) {
-        toast.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: error.message || 'Failed to delete CPT test',
-          life: 3000
-        })
+        showErrorToast(error, 'Failed to delete CPT test');
       }
-    }
-  })
-}
+    },
+  });
+};
 
 const handleSaved = () => {
-  showFormDialog.value = false
-  loadTests()
-}
+  showFormDialog.value = false;
+  loadTests();
+};
 
 const formatDate = (date) => {
-  if (!date) return ''
-  return new Date(date).toLocaleDateString()
-}
+  if (!date) return '';
+  return new Date(date).toLocaleDateString();
+};
 
 onMounted(() => {
-  loadTests()
-})
+  loadTests();
+});
 </script>
 
 <style scoped>

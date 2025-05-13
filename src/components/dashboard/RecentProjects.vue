@@ -62,6 +62,7 @@ import { computed } from 'vue';
 import { useProjectStore } from '@/stores/project.store';
 import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
+import { showErrorToast, showSuccessToast } from '@/utils/toast';
 import Card from 'primevue/card';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
@@ -95,19 +96,9 @@ const confirmDelete = (project) => {
 const deleteProject = async (project) => {
   try {
     await projectStore.deleteProject(project.id);
-    toast.add({
-      severity: 'success',
-      summary: 'Success',
-      detail: 'Project deleted successfully',
-      life: 3000
-    });
+    showSuccessToast('Project deleted successfully');
   } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: error.message || 'Failed to delete project',
-      life: 3000
-    });
+    showErrorToast(error, 'Failed to delete project');
   }
 };
 </script>

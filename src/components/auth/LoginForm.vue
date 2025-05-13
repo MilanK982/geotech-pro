@@ -66,6 +66,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth.store';
 import { useToast } from 'primevue/usetoast';
+import { showErrorToast, showSuccessToast } from '@/utils/toast';
 import Card from 'primevue/card';
 import InputText from 'primevue/inputtext';
 import Password from 'primevue/password';
@@ -84,25 +85,14 @@ const loading = ref(false);
 
 const handleSubmit = async () => {
   submitted.value = true;
-
   if (username.value && password.value) {
     loading.value = true;
     try {
       await authStore.login(username.value, password.value);
-      toast.add({
-        severity: 'success',
-        summary: 'Success',
-        detail: 'Login successful',
-        life: 3000
-      });
+      showSuccessToast(toast, 'Login successful');
       router.push('/dashboard');
     } catch (error) {
-      toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: error.message || 'Login failed',
-        life: 3000
-      });
+      showErrorToast(toast, error, 'Login failed');
     } finally {
       loading.value = false;
     }

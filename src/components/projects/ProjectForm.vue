@@ -102,6 +102,7 @@ import { useVuelidate } from '@vuelidate/core';
 import { required } from '@vuelidate/validators';
 import { useProjectStore } from '@/stores/project.store';
 import { useToast } from 'primevue/usetoast';
+import { showErrorToast, showSuccessToast } from '@/utils/toast';
 import { useRoute, useRouter } from 'vue-router';
 
 const props = defineProps({
@@ -165,33 +166,19 @@ const handleSubmit = async () => {
   try {
     if (props.isEdit) {
       await projectStore.updateProject(route.params.id, formData.value);
-      toast.add({
-        severity: 'success',
-        summary: 'Success',
-        detail: 'Project updated successfully',
-        life: 3000
-      });
+      showSuccessToast('Project updated successfully');
     } else {
       await projectStore.createProject(formData.value);
-      toast.add({
-        severity: 'success',
-        summary: 'Success',
-        detail: 'Project created successfully',
-        life: 3000
-      });
+      showSuccessToast('Project created successfully');
     }
     router.push('/projects');
   } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: error.message || 'Failed to save project',
-      life: 3000
-    });
+    showErrorToast(error, 'Failed to save project');
   } finally {
     loading.value = false;
   }
 };
+
 </script>
 
 <style scoped>

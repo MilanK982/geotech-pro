@@ -28,10 +28,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
-import { Chart, registerables } from 'chart.js'
-import { useSoilStore } from '@/stores/soil'
-import { useToast } from 'primevue/usetoast'
+import { ref, onMounted, watch, nextTick } from 'vue';
+import { Chart, registerables } from 'chart.js';
+import { useSoilStore } from '@/stores/soil';
+import { useToast } from 'primevue/usetoast';
+import { showErrorToast, showSuccessToast } from '@/utils/toast';
 
 Chart.register(...registerables)
 
@@ -67,47 +68,36 @@ const soilTypeColors = {
 }
 
 const initChart = async () => {
-  if (!plotCanvas.value) return
+  if (!plotCanvas.value) return;
 
   try {
-    const layers = await soilStore.fetchLayersByProject(props.projectId)
+    const layers = await soilStore.fetchLayersByProject(props.projectId);
     if (!layers.length) {
-      toast.add({
-        severity: 'warn',
-        summary: 'Warning',
-        detail: $t('soil.noDataForPlot'),
-        life: 3000
-      })
-      return
+      showErrorToast(new Error('No data available'), 'No data available for plotting');
+      return;
     }
 
-    // Sort layers by depth
-    const sortedLayers = [...layers].sort((a, b) => a.topDepth - b.topDepth)
+    const sortedLayers = [...layers].sort((a, b) => a.topDepth - b.topDepth);
 
-    // Prepare data for the chart
     const datasets = sortedLayers.map(layer => ({
       label: layer.name,
       data: [
         { x: 0, y: layer.topDepth },
-        { x: 1, y: layer.bottomDepth }
+        { x: 1, y: layer.bottomDepth },
       ],
       backgroundColor: soilTypeColors[layer.soilType] || 'rgba(0, 0, 0, 0.1)',
       borderColor: 'rgba(0, 0, 0, 0.5)',
       borderWidth: 1,
-      fill: true
-    }))
+      fill: true,
+    }));
 
-    // Destroy existing chart if it exists
     if (chart.value) {
-      chart.value.destroy()
+      chart.value.destroy();
     }
 
-    // Create new chart
     chart.value = new Chart(plotCanvas.value, {
       type: 'scatter',
-      data: {
-        datasets
-      },
+      data: { datasets },
       options: {
         responsive: true,
         maintainAspectRatio: false,
@@ -117,69 +107,69 @@ const initChart = async () => {
             position: 'top',
             min: 0,
             max: 1,
-            display: false
+            display: false,
           },
           y: {
             reverse: true,
             title: {
               display: true,
-              text: $t('soil.depth')
-            }
-          }
+              text: 'Depth (m)',
+            },
+          },
         },
         plugins: {
           legend: {
             position: 'right',
             labels: {
               generateLabels: (chart) => {
-                const datasets = chart.data.datasets
+                const datasets = chart.data.datasets;
                 return datasets.map((dataset, i) => ({
                   text: dataset.label,
                   fillStyle: dataset.backgroundColor,
                   strokeStyle: dataset.borderColor,
                   lineWidth: dataset.borderWidth,
                   hidden: !chart.isDatasetVisible(i),
-                  index: i
-                }))
-              }
-            }
+                  index: i,
+                }));
+              },
+            },
           },
           tooltip: {
             callbacks: {
               label: (context) => {
-                const layer = sortedLayers[context.datasetIndex]
+                const layer = sortedLayers[context.datasetIndex];
                 return [
-                  `${$t('soil.layerName')}: ${layer.name}`,
-                  `${$t('soil.soilType')}: ${layer.soilType}`,
-                  `${$t('soil.topDepth')}: ${layer.topDepth} m`,
-                  `${$t('soil.bottomDepth')}: ${layer.bottomDepth} m`,
-                  `${$t('soil.thickness')}: ${layer.thickness} m`
-                ]
-              }
-            }
-          }
-        }
-      }
-    })
+                  `Layer: ${layer.name}`,
+                  `Soil Type: ${layer.soilType}`,
+                  `Top Depth: ${layer.topDepth} m`,
+                  `Bottom Depth: ${layer.bottomDepth} m`,
+                  `Thickness: ${layer.thickness} m`,
+                ];
+              },
+            },
+          },
+        },
+      },
+    });
   } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: error.message || $t('soil.plotError'),
-      life: 3000
-    })
+    showErrorToast(error, 'Failed to generate plot');
   }
-}
+};
 
 const handleExport = () => {
-  if (!chart.value) return
+  if (!chart.value) return;
 
-  const canvas = chart.value.canvas
-  const link = document.createElement('a')
-  link.download = `soil-layers-${props.projectId}.png`
-  link.href = canvas.toDataURL('image/png')
-  link.click()
-}
+  try {
+    const canvas = chart.value.canvas;
+    const link = document.createElement('a');
+    link.download = `soil-layers-${props.projectId}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    showSuccessToast('Plot exported successfully');
+  } catch (error) {
+    showErrorToast(error, 'Failed to export plot');
+  }
+};
 
 watch(() => props.visible, (newValue) => {
   if (newValue) {

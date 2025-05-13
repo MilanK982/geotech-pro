@@ -130,133 +130,107 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useVuelidate } from '@vuelidate/core'
-import { required } from '@vuelidate/validators'
-import { useCptStore } from '@/stores/cpt'
-import { useToast } from 'primevue/usetoast'
-import CptDataImport from './CptDataImport.vue'
-import CptDataPlot from './CptDataPlot.vue'
+import { ref, computed } from 'vue';
+import { useVuelidate } from '@vuelidate/core';
+import { required } from '@vuelidate/validators';
+import { useCptStore } from '@/stores/cpt';
+import { useToast } from 'primevue/usetoast';
+import { showErrorToast, showSuccessToast } from '@/utils/toast';
+import CptDataImport from './CptDataImport.vue';
+import CptDataPlot from './CptDataPlot.vue';
 
 const props = defineProps({
-  projectId: {
-    type: String,
-    required: true
-  },
-  testId: {
-    type: String,
-    default: null
-  }
-})
+  projectId: { type: String, required: true },
+  testId: { type: String, default: null },
+});
 
-const emit = defineEmits(['cancel', 'saved'])
+const emit = defineEmits(['cancel', 'saved']);
 
-const cptStore = useCptStore()
-const toast = useToast()
+const cptStore = useCptStore();
+const toast = useToast();
 
 const formData = ref({
   testNumber: '',
   testDate: null,
   depth: null,
   coordinates: '',
-  description: ''
-})
+  description: '',
+});
 
 const rules = {
   testNumber: { required },
   testDate: { required },
-  depth: { required }
-}
+  depth: { required },
+};
 
-const v$ = useVuelidate(rules, formData)
+const v$ = useVuelidate(rules, formData);
 
-const loading = ref(false)
+const loading = ref(false);
 const hasData = computed(() => {
   if (props.testId) {
-    const test = cptStore.getTestById(props.testId)
-    return test && test.data && test.data.length > 0
+    const test = cptStore.getTestById(props.testId);
+    return test && test.data && test.data.length > 0;
   }
-  return false
-})
+  return false;
+});
 
-const showImportDialog = ref(false)
-const showPlotDialog = ref(false)
+const showImportDialog = ref(false);
+const showPlotDialog = ref(false);
 
 const handleSubmit = async () => {
-  const isValid = await v$.value.$validate()
-  if (!isValid) return
+  const isValid = await v$.value.$validate();
+  if (!isValid) return;
 
-  loading.value = true
+  loading.value = true;
   try {
     if (props.testId) {
-      await cptStore.updateTest(props.projectId, props.testId, formData.value)
-      toast.add({
-        severity: 'success',
-        summary: 'Success',
-        detail: 'CPT test updated successfully',
-        life: 3000
-      })
+      await cptStore.updateTest(props.projectId, props.testId, formData.value);
+      showSuccessToast('CPT test updated successfully');
     } else {
-      await cptStore.createTest(props.projectId, formData.value)
-      toast.add({
-        severity: 'success',
-        summary: 'Success',
-        detail: 'CPT test created successfully',
-        life: 3000
-      })
+      await cptStore.createTest(props.projectId, formData.value);
+      showSuccessToast('CPT test created successfully');
     }
-    emit('saved')
+    emit('saved');
   } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: error.message || 'Failed to save CPT test',
-      life: 3000
-    })
+    showErrorToast(error, 'Failed to save CPT test');
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
 const handleDataImported = () => {
-  // Refresh test data
   if (props.testId) {
-    const test = cptStore.getTestById(props.testId)
+    const test = cptStore.getTestById(props.testId);
     if (test) {
       formData.value = {
         ...formData.value,
-        data: test.data
-      }
+        data: test.data,
+      };
     }
   }
-}
+};
 
 const handleExport = async () => {
-  if (!props.testId) return
+  if (!props.testId) return;
 
   try {
-    await cptStore.exportData(props.projectId, props.testId)
+    await cptStore.exportData(props.projectId, props.testId);
+    showSuccessToast('CPT data exported successfully');
   } catch (error) {
-    toast.add({
-      severity: 'error',
-      summary: 'Error',
-      detail: error.message || 'Failed to export data',
-      life: 3000
-    })
+    showErrorToast(error, 'Failed to export data');
   }
-}
+};
 
-// Load test data if editing
 if (props.testId) {
-  const test = cptStore.getTestById(props.testId)
+  const test = cptStore.getTestById(props.testId);
   if (test) {
     formData.value = {
       testNumber: test.testNumber,
       testDate: new Date(test.testDate),
       depth: test.depth,
       coordinates: test.coordinates,
-      description: test.description
-    }
+      description: test.description,
+    };
   }
 }
 </script>
