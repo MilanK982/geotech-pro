@@ -128,7 +128,7 @@ import { useToast } from 'primevue/usetoast';
 import { showErrorToast, showSuccessToast } from '@/utils/toast';
 import { useConfirm } from 'primevue/useconfirm';
 import CptTestList from '@/components/cpt/CptTestList.vue';
-import ProjectForm from '@/components/project/ProjectForm.vue';
+import ProjectForm from '@/components/projects/ProjectForm.vue';
 import SoilLayerList from '@/components/soil/SoilLayerList.vue';
 import Card from 'primevue/card';
 import Button from 'primevue/button';

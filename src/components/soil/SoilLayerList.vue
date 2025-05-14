@@ -1,226 +1,311 @@
 <template>
   <div class="soil-layer-list">
     <div class="flex justify-content-between align-items-center mb-4">
-      <h2>{{ $t('soil.title') }}</h2>
-      <div class="flex gap-2">
-        <Button
-          :label="$t('soil.plotData')"
-          icon="pi pi-chart-bar"
-          @click="showPlotDialog = true"
-        />
-        <Button
-          :label="$t('soil.newLayer')"
-          icon="pi pi-plus"
-          @click="handleNewLayer"
-        />
-      </div>
+      <h2>Soil Layers</h2>
+      <Button
+        icon="pi pi-plus"
+        label="Add Layer"
+        @click="showAddLayerDialog = true"
+      />
     </div>
 
-    <div ref="tableRef" class="soil-table"></div>
+    <div v-if="loading" class="flex justify-content-center">
+      <ProgressSpinner />
+    </div>
+
+    <div v-else-if="error" class="p-error">
+      {{ error }}
+    </div>
+
+    <div v-else>
+      <DataTable
+        :value="layers"
+        :paginator="true"
+        :rows="10"
+        :rowsPerPageOptions="[5, 10, 20]"
+        tableStyle="min-width: 50rem"
+      >
+        <Column field="name" header="Name" sortable></Column>
+        <Column field="depth" header="Depth (m)" sortable>
+          <template #body="{ data }">
+            {{ data.depth.toFixed(2) }}
+          </template>
+        </Column>
+        <Column field="unit_weight" header="Unit Weight (kN/m³)" sortable>
+          <template #body="{ data }">
+            {{ data.unit_weight.toFixed(2) }}
+          </template>
+        </Column>
+        <Column field="cohesion" header="Cohesion (kPa)" sortable>
+          <template #body="{ data }">
+            {{ data.cohesion.toFixed(2) }}
+          </template>
+        </Column>
+        <Column field="friction_angle" header="Friction Angle (°)" sortable>
+          <template #body="{ data }">
+            {{ data.friction_angle.toFixed(2) }}
+          </template>
+        </Column>
+        <Column field="compressibility" header="Compressibility" sortable>
+          <template #body="{ data }">
+            {{ data.compressibility.toFixed(2) }}
+          </template>
+        </Column>
+        <Column :exportable="false" style="min-width: 8rem">
+          <template #body="{ data }">
+            <Button
+              icon="pi pi-pencil"
+              class="p-button-rounded p-button-text mr-2"
+              @click="editLayer(data)"
+            />
+            <Button
+              icon="pi pi-trash"
+              class="p-button-rounded p-button-text p-button-danger"
+              @click="confirmDeleteLayer(data)"
+            />
+          </template>
+        </Column>
+      </DataTable>
+    </div>
 
     <Dialog
-      v-model:visible="showFormDialog"
-      :header="isEditing ? $t('soil.editLayer') : $t('soil.newLayer')"
+      v-model:visible="showAddLayerDialog"
+      header="Add Soil Layer"
       :modal="true"
-      :style="{ width: '50vw' }"
-      :closable="true"
+      class="p-fluid"
     >
-      <SoilLayerForm
-        :project-id="projectId"
-        :layer-id="selectedLayerId"
-        @saved="handleSaved"
-        @cancel="showFormDialog = false"
-      />
+      <div class="field">
+        <label for="name">Name</label>
+        <InputText
+          id="name"
+          v-model="newLayer.name"
+          required
+          autofocus
+          :class="{ 'p-invalid': submitted && !newLayer.name }"
+        />
+        <small class="p-error" v-if="submitted && !newLayer.name">Name is required.</small>
+      </div>
+
+      <div class="field">
+        <label for="depth">Depth (m)</label>
+        <InputNumber
+          id="depth"
+          v-model="newLayer.depth"
+          :minFractionDigits="2"
+          :maxFractionDigits="2"
+          required
+        />
+      </div>
+
+      <div class="field">
+        <label for="unit_weight">Unit Weight (kN/m³)</label>
+        <InputNumber
+          id="unit_weight"
+          v-model="newLayer.unit_weight"
+          :minFractionDigits="2"
+          :maxFractionDigits="2"
+          required
+        />
+      </div>
+
+      <div class="field">
+        <label for="cohesion">Cohesion (kPa)</label>
+        <InputNumber
+          id="cohesion"
+          v-model="newLayer.cohesion"
+          :minFractionDigits="2"
+          :maxFractionDigits="2"
+          required
+        />
+      </div>
+
+      <div class="field">
+        <label for="friction_angle">Friction Angle (°)</label>
+        <InputNumber
+          id="friction_angle"
+          v-model="newLayer.friction_angle"
+          :minFractionDigits="2"
+          :maxFractionDigits="2"
+          required
+        />
+      </div>
+
+      <div class="field">
+        <label for="compressibility">Compressibility</label>
+        <InputNumber
+          id="compressibility"
+          v-model="newLayer.compressibility"
+          :minFractionDigits="2"
+          :maxFractionDigits="2"
+          required
+        />
+      </div>
+
+      <template #footer>
+        <Button
+          label="Cancel"
+          icon="pi pi-times"
+          class="p-button-text"
+          @click="showAddLayerDialog = false"
+        />
+        <Button
+          label="Save"
+          icon="pi pi-check"
+          @click="saveLayer"
+          :loading="saving"
+        />
+      </template>
     </Dialog>
 
-    <SoilLayerPlot
-      :project-id="projectId"
-      v-model:visible="showPlotDialog"
-    />
-
-    <ConfirmDialog />
+    <ConfirmDialog></ConfirmDialog>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue';
-import { Tabulator } from 'tabulator-tables';
+import { ref, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import { useSoilStore } from '@/stores/soil';
 import { useToast } from 'primevue/usetoast';
-import { showErrorToast, showSuccessToast } from '@/utils/toast';
 import { useConfirm } from 'primevue/useconfirm';
-import SoilLayerForm from './SoilLayerForm.vue';
-import SoilLayerPlot from './SoilLayerPlot.vue';
+import Button from 'primevue/button';
+import DataTable from 'primevue/datatable';
+import Column from 'primevue/column';
+import Dialog from 'primevue/dialog';
+import InputText from 'primevue/inputtext';
+import InputNumber from 'primevue/inputnumber';
+import ProgressSpinner from 'primevue/progressspinner';
+import ConfirmDialog from 'primevue/confirmdialog';
 
 const props = defineProps({
-  projectId: {
-    type: String,
+  modelId: {
+    type: [String, Number],
     required: true
   }
-})
+});
 
-const soilStore = useSoilStore()
-const toast = useToast()
-const confirm = useConfirm()
+const soilStore = useSoilStore();
+const toast = useToast();
+const confirm = useConfirm();
+const route = useRoute();
 
-const tableRef = ref(null)
-const table = ref(null)
-const showFormDialog = ref(false)
-const isEditing = ref(false)
-const selectedLayerId = ref(null)
-const showPlotDialog = ref(false)
+const loading = ref(false);
+const saving = ref(false);
+const submitted = ref(false);
+const showAddLayerDialog = ref(false);
+const layers = ref([]);
 
-const tableConfig = {
-  height: 'calc(100vh - 300px)',
-  layout: 'fitColumns',
-  columns: [
-    {
-      title: 'ID',
-      field: 'id',
-      visible: false
-    },
-    {
-      title: 'Layer Name',
-      field: 'name',
-      headerFilter: 'input',
-      sorter: 'string'
-    },
-    {
-      title: 'Top Depth',
-      field: 'topDepth',
-      headerFilter: 'input',
-      sorter: 'number',
-      formatter: (cell) => `${cell.getValue()} m`
-    },
-    {
-      title: 'Bottom Depth',
-      field: 'bottomDepth',
-      headerFilter: 'input',
-      sorter: 'number',
-      formatter: (cell) => `${cell.getValue()} m`
-    },
-    {
-      title: 'Thickness',
-      field: 'thickness',
-      sorter: 'number',
-      formatter: (cell) => `${cell.getValue()} m`
-    },
-    {
-      title: 'Soil Type',
-      field: 'soilType',
-      headerFilter: 'input',
-      sorter: 'string'
-    },
-    {
-      title: 'Actions',
-      formatter: 'buttonCross',
-      width: 100,
-      cellClick: (e, cell) => {
-        const row = cell.getRow()
-        const data = row.getData()
-        handleDelete(data)
-      }
-    }
-  ],
-  data: [],
-  rowClick: (e, row) => {
-    const data = row.getData()
-    handleEdit(data)
-  }
-}
+const newLayer = ref({
+  name: '',
+  depth: 0,
+  unit_weight: 18,
+  cohesion: 0,
+  friction_angle: 0,
+  compressibility: 0
+});
+
+onMounted(async () => {
+  await loadLayers();
+});
 
 const loadLayers = async () => {
+  loading.value = true;
   try {
-    await soilStore.fetchLayersByProject(props.projectId);
-    table.value.setData(soilStore.layers);
+    layers.value = await soilStore.fetchLayers(props.modelId);
   } catch (error) {
-    showErrorToast(toast, error, 'Failed to load soil layers');
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: error.message || 'Failed to load soil layers',
+      life: 3000
+    });
+  } finally {
+    loading.value = false;
   }
 };
 
-const handleNewLayer = () => {
-  isEditing.value = false;
-  selectedLayerId.value = null;
-  showFormDialog.value = true;
+const saveLayer = async () => {
+  submitted.value = true;
+  
+  if (!newLayer.value.name) {
+    return;
+  }
+
+  saving.value = true;
+  try {
+    const updatedLayers = [...layers.value, newLayer.value];
+    await soilStore.saveLayers(props.modelId, updatedLayers);
+    layers.value = updatedLayers;
+    showAddLayerDialog.value = false;
+    resetForm();
+    
+    toast.add({
+      severity: 'success',
+      summary: 'Success',
+      detail: 'Soil layer added successfully',
+      life: 3000
+    });
+  } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: error.message || 'Failed to save soil layer',
+      life: 3000
+    });
+  } finally {
+    saving.value = false;
+  }
 };
 
-const handleEdit = (layer) => {
-  isEditing.value = true;
-  selectedLayerId.value = layer.id;
-  showFormDialog.value = true;
+const editLayer = (layer) => {
+  newLayer.value = { ...layer };
+  showAddLayerDialog.value = true;
 };
 
-const handleDelete = (layer) => {
+const confirmDeleteLayer = (layer) => {
   confirm.require({
-    message: 'Are you sure you want to delete this soil layer?',
+    message: 'Are you sure you want to delete this layer?',
     header: 'Delete Confirmation',
     icon: 'pi pi-exclamation-triangle',
-    acceptClass: 'p-button-danger',
-    accept: async () => {
-      try {
-        await soilStore.deleteLayer(props.projectId, layer.id);
-        showSuccessToast(toast, 'Soil layer deleted successfully');
-        loadLayers();
-      } catch (error) {
-        showErrorToast(toast, error, 'Failed to delete soil layer');
-      }
-    },
+    accept: () => deleteLayer(layer)
   });
 };
 
-const handleSaved = () => {
-  showFormDialog.value = false;
-  loadLayers();
-  showSuccessToast(toast, 'Soil layer saved successfully');
+const deleteLayer = async (layer) => {
+  try {
+    await soilStore.deleteLayer(props.modelId, layer.id);
+    layers.value = layers.value.filter(l => l.id !== layer.id);
+    
+    toast.add({
+      severity: 'success',
+      summary: 'Success',
+      detail: 'Soil layer deleted successfully',
+      life: 3000
+    });
+  } catch (error) {
+    toast.add({
+      severity: 'error',
+      summary: 'Error',
+      detail: error.message || 'Failed to delete soil layer',
+      life: 3000
+    });
+  }
 };
 
-onMounted(() => {
-  table.value = new Tabulator(tableRef.value, tableConfig);
-  loadLayers();
-});
-
-onBeforeUnmount(() => {
-  if (table.value) {
-    table.value.destroy();
-  }
-});
+const resetForm = () => {
+  newLayer.value = {
+    name: '',
+    depth: 0,
+    unit_weight: 18,
+    cohesion: 0,
+    friction_angle: 0,
+    compressibility: 0
+  };
+  submitted.value = false;
+};
 </script>
 
 <style scoped>
 .soil-layer-list {
   padding: 1rem;
-}
-
-.soil-table {
-  background-color: var(--surface-card);
-  border-radius: 6px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-:deep(.tabulator) {
-  border: none;
-  background-color: transparent;
-}
-
-:deep(.tabulator-header) {
-  background-color: var(--surface-ground);
-  border-bottom: 1px solid var(--surface-border);
-}
-
-:deep(.tabulator-row) {
-  border-bottom: 1px solid var(--surface-border);
-}
-
-:deep(.tabulator-row.tabulator-selected) {
-  background-color: var(--primary-50);
-}
-
-:deep(.tabulator-cell) {
-  padding: 0.75rem;
-}
-
-:deep(.tabulator-footer) {
-  background-color: var(--surface-ground);
-  border-top: 1px solid var(--surface-border);
 }
 </style> 

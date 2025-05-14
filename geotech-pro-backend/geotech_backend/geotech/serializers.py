@@ -17,20 +17,23 @@ class ProjectSerializer(serializers.ModelSerializer):
 
     def get_models_count(self, obj):
         try:
-            return obj.models.count()
-        except Exception:
+            return obj.geotechnical_models.all().count()
+        except Exception as e:
+            print(f"Error in get_models_count: {str(e)}")
             return 0
 
     def get_cpt_tests_count(self, obj):
         try:
             return CptTest.objects.filter(model__project=obj).count()
-        except Exception:
+        except Exception as e:
+            print(f"Error in get_cpt_tests_count: {str(e)}")
             return 0
 
     def get_layers_count(self, obj):
         try:
             return Layer.objects.filter(model__project=obj).count()
-        except Exception:
+        except Exception as e:
+            print(f"Error in get_layers_count: {str(e)}")
             return 0
 
     def create(self, validated_data):

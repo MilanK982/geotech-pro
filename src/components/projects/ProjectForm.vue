@@ -1,132 +1,127 @@
 <template>
-  <form @submit.prevent="handleSubmit" class="project-form">
-    <div class="grid">
-      <div class="col-12">
-        <div class="field">
-          <label for="name" class="block mb-2">{{ $t('projects.projectName') }}</label>
-          <InputText
-            id="name"
-            v-model="formData.name"
-            :class="{ 'p-invalid': v$.name.$invalid && v$.name.$dirty }"
-            class="w-full"
-          />
-          <small class="p-error" v-if="v$.name.$invalid && v$.name.$dirty">
-            {{ $t('validation.projectNameRequired') }}
-          </small>
-        </div>
-      </div>
+  <form @submit.prevent="handleSubmit" class="p-fluid">
+    <div class="field">
+      <label for="name">Project Name</label>
+      <InputText
+        id="name"
+        v-model="formData.name"
+        :class="{ 'p-invalid': submitted && !formData.name }"
+        required
+      />
+      <small class="p-error" v-if="submitted && !formData.name">Project name is required.</small>
+    </div>
 
-      <div class="col-12">
-        <div class="field">
-          <label for="description" class="block mb-2">{{ $t('projects.projectDescription') }}</label>
-          <Textarea
-            id="description"
-            v-model="formData.description"
-            rows="4"
-            class="w-full"
-          />
-        </div>
-      </div>
+    <div class="field">
+      <label for="description">Description</label>
+      <Textarea
+        id="description"
+        v-model="formData.description"
+        rows="3"
+        autoResize
+      />
+    </div>
 
-      <div class="col-12">
-        <div class="field">
-          <label for="location" class="block mb-2">{{ $t('projects.location') }}</label>
-          <InputText
-            id="location"
-            v-model="formData.location"
-            class="w-full"
-          />
-        </div>
-      </div>
+    <div class="field">
+      <label for="location">Location</label>
+      <InputText
+        id="location"
+        v-model="formData.location"
+      />
+    </div>
 
-      <div class="col-12 md:col-6">
-        <div class="field">
-          <label for="startDate" class="block mb-2">{{ $t('projects.startDate') }}</label>
-          <Calendar
-            id="startDate"
-            v-model="formData.startDate"
-            dateFormat="dd.mm.yy"
-            class="w-full"
-          />
-        </div>
-      </div>
+    <div class="field">
+      <label for="client">Client</label>
+      <InputText
+        id="client"
+        v-model="formData.client"
+      />
+    </div>
 
-      <div class="col-12 md:col-6">
-        <div class="field">
-          <label for="endDate" class="block mb-2">{{ $t('projects.endDate') }}</label>
-          <Calendar
-            id="endDate"
-            v-model="formData.endDate"
-            dateFormat="dd.mm.yy"
-            class="w-full"
-          />
-        </div>
-      </div>
+    <div class="field">
+      <label for="status">Status</label>
+      <Dropdown
+        id="status"
+        v-model="formData.status"
+        :options="statusOptions"
+        optionLabel="label"
+        optionValue="value"
+        placeholder="Select Status"
+      />
+    </div>
 
-      <div class="col-12">
-        <div class="field">
-          <label for="status" class="block mb-2">{{ $t('projects.status') }}</label>
-          <Dropdown
-            id="status"
-            v-model="formData.status"
-            :options="statusOptions"
-            optionLabel="label"
-            optionValue="value"
-            class="w-full"
-          />
-        </div>
-      </div>
+    <div class="field">
+      <label for="startDate">Start Date</label>
+      <Calendar
+        id="startDate"
+        v-model="formData.start_date"
+        dateFormat="yy-mm-dd"
+        :showIcon="true"
+      />
+    </div>
 
-      <div class="col-12">
-        <div class="flex justify-content-end gap-2">
-          <Button
-            type="button"
-            :label="$t('common.cancel')"
-            class="p-button-secondary"
-            @click="$router.back()"
-          />
-          <Button
-            type="submit"
-            :label="isEdit ? $t('common.save') : $t('common.create')"
-            :loading="loading"
-          />
-        </div>
-      </div>
+    <div class="field">
+      <label for="endDate">End Date</label>
+      <Calendar
+        id="endDate"
+        v-model="formData.end_date"
+        dateFormat="yy-mm-dd"
+        :showIcon="true"
+      />
+    </div>
+
+    <div class="flex justify-content-end">
+      <Button
+        type="button"
+        label="Cancel"
+        class="p-button-text mr-2"
+        @click="$emit('cancel')"
+      />
+      <Button
+        type="submit"
+        label="Save"
+        :loading="loading"
+      />
     </div>
   </form>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useVuelidate } from '@vuelidate/core';
-import { required } from '@vuelidate/validators';
-import { useProjectStore } from '@/stores/project.store';
-import { useToast } from 'primevue/usetoast';
-import { showErrorToast, showSuccessToast } from '@/utils/toast';
-import { useRoute, useRouter } from 'vue-router';
+import { ref, defineProps, defineEmits } from 'vue';
+import InputText from 'primevue/inputtext';
+import Textarea from 'primevue/textarea';
+import Dropdown from 'primevue/dropdown';
+import Calendar from 'primevue/calendar';
+import Button from 'primevue/button';
 
 const props = defineProps({
-  isEdit: {
-    type: Boolean,
-    default: false
+  project: {
+    type: Object,
+    default: () => ({
+      name: '',
+      description: '',
+      location: '',
+      client: '',
+      status: 'active',
+      start_date: null,
+      end_date: null
+    })
   }
 });
 
-const projectStore = useProjectStore();
-const toast = useToast();
-const route = useRoute();
-const router = useRouter();
-
-const formData = ref({
-  name: '',
-  description: '',
-  location: '',
-  startDate: null,
-  endDate: null,
-  status: 'active'
-});
+const emit = defineEmits(['submit', 'cancel']);
 
 const loading = ref(false);
+const submitted = ref(false);
+
+const formData = ref({
+  name: props.project.name || '',
+  description: props.project.description || '',
+  location: props.project.location || '',
+  client: props.project.client || '',
+  status: props.project.status || 'active',
+  start_date: props.project.start_date ? new Date(props.project.start_date) : null,
+  end_date: props.project.end_date ? new Date(props.project.end_date) : null
+});
 
 const statusOptions = [
   { label: 'Active', value: 'active' },
@@ -135,60 +130,34 @@ const statusOptions = [
   { label: 'Cancelled', value: 'cancelled' }
 ];
 
-const rules = {
-  name: { required }
-};
-
-const v$ = useVuelidate(rules, formData);
-
-onMounted(async () => {
-  if (props.isEdit) {
-    try {
-      const project = await projectStore.fetchProject(route.params.id);
-      formData.value = { ...project };
-    } catch (error) {
-      toast.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: error.message || 'Failed to load project',
-        life: 3000
-      });
-      router.push('/projects');
-    }
-  }
-});
-
 const handleSubmit = async () => {
-  const isValid = await v$.value.$validate();
-  if (!isValid) return;
+  submitted.value = true;
+  
+  if (!formData.value.name) {
+    return;
+  }
 
   loading.value = true;
   try {
-    if (props.isEdit) {
-      await projectStore.updateProject(route.params.id, formData.value);
-      showSuccessToast(toast, 'Project updated successfully');
-    } else {
-      await projectStore.createProject(formData.value);
-      showSuccessToast(toast, 'Project created successfully');
-    }
-    router.push('/projects');
-  } catch (error) {
-    showErrorToast(toast, error, 'Failed to save project');
+    emit('submit', {
+      ...formData.value,
+      start_date: formData.value.start_date ? formData.value.start_date.toISOString().split('T')[0] : null,
+      end_date: formData.value.end_date ? formData.value.end_date.toISOString().split('T')[0] : null
+    });
   } finally {
     loading.value = false;
   }
 };
-
 </script>
 
 <style scoped>
-.project-form {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 1rem;
-}
-
 .field {
   margin-bottom: 1.5rem;
+}
+
+.field label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
 }
 </style> 

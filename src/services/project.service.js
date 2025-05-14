@@ -8,8 +8,15 @@ const getAuthHeaders = () => {
 
 export const getProjects = async () => {
   console.log('Fetching projects from:', api.defaults.baseURL + '/projects/');
-  const response = await api.get('/projects/')
-  return response.data
+  console.log('User from localStorage:', localStorage.getItem('user'));
+  try {
+    const response = await api.get('/projects/');
+    return response.data;
+  } catch (error) {
+    console.error('Full error response:', error.response);
+    console.error('Error details:', error.response?.data);
+    throw error;
+  }
 }
 
 export const getProject = async (id) => {

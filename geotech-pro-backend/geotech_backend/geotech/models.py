@@ -1,8 +1,10 @@
+# geotech/models.py
 from django.db import models
 from django.contrib.auth.models import User
 
-
-# Create your models here.
+class ProjectManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset()
 
 class Project(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='projects')
@@ -21,8 +23,15 @@ class Project(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    objects = ProjectManager()
+
     def __str__(self):
         return self.name
+    
+    class Meta:
+        verbose_name = 'project'
+        verbose_name_plural = 'projects'
+        ordering = ['-updated_at']
 
 class Object(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='objects')
@@ -36,9 +45,9 @@ class Object(models.Model):
         unique_together = ['project', 'name']
 
 class GeotechnicalModel(models.Model):
-    object = models.ForeignKey(Object, on_delete=models.CASCADE, related_name='models', null=True, blank=True)
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='models')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='models')
+    object = models.ForeignKey(Object, on_delete=models.CASCADE, related_name='geotechnical_models', null=True, blank=True)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='geotechnical_models')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='geotechnical_models')
     name = models.CharField(max_length=100)
     npv = models.FloatField(default=0)
     npv_max = models.FloatField(default=0)
@@ -81,4 +90,3 @@ class CptData(models.Model):
 
     def __str__(self):
         return f"CPT Data at {self.depth}m"
-

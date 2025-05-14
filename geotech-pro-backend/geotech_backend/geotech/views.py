@@ -13,6 +13,12 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
+from django.db.models import Count
+from django.db import connection
+import traceback
+import logging
+
+logger = logging.getLogger('geotech')
 
 class CsrfView(APIView):
     permission_classes = [AllowAny]
@@ -67,13 +73,42 @@ class ProjectView(APIView):
             except Project.DoesNotExist:
                 return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
             except Exception as e:
+                logger.error(f"Error fetching single project: {str(e)}")
+                logger.error(traceback.format_exc())
                 return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
             try:
-                projects = Project.objects.filter(user=request.user).order_by('-updated_at')
-                serializer = ProjectSerializer(projects, many=True)
-                return Response(serializer.data)
+                logger.debug("Fetching all projects for user")
+                
+                with connection.cursor() as cursor:
+                    cursor.execute("""
+                        SELECT p.*, 
+                               COUNT(DISTINCT gm.id) as models_count,
+                               COUNT(DISTINCT ct.id) as cpt_tests_count,
+                               COUNT(DISTINCT l.id) as layers_count
+                        FROM geotech_project p
+                        LEFT JOIN geotech_geotechnicalmodel gm ON gm.project_id = p.id
+                        LEFT JOIN geotech_cpttest ct ON ct.model_id = gm.id
+                        LEFT JOIN geotech_layer l ON l.model_id = gm.id
+                        WHERE p.user_id = %s
+                        GROUP BY p.id
+                        ORDER BY p.updated_at DESC
+                    """, [request.user.id])
+                    
+                    columns = [col[0] for col in cursor.description]
+                    projects = []
+                    for row in cursor.fetchall():
+                        project_dict = dict(zip(columns, row))
+                        # Convert datetime objects to strings
+                        for key in ['created_at', 'updated_at']:
+                            if key in project_dict and project_dict[key]:
+                                project_dict[key] = project_dict[key].isoformat()
+                        projects.append(project_dict)
+                
+                return Response(projects)
             except Exception as e:
+                logger.error(f"Error fetching projects: {str(e)}")
+                logger.error(traceback.format_exc())
                 return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def post(self, request):
@@ -112,27 +147,61 @@ class ProjectView(APIView):
 class StatsView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request, project_id=None):
-        if project_id:
-            try:
-                project = Project.objects.get(id=project_id, user=request.user)
-                stats = {
-                    'totalCptTests': CptTest.objects.filter(model__project=project).count(),
-                    'totalSoilLayers': Layer.objects.filter(model__project=project).count(),
-                }
-                return Response(stats)
-            except Project.DoesNotExist:
-                return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
-        else:
-            stats = {
-                'totalProjects': Project.objects.filter(user=request.user).count(),
-                'totalCptTests': CptTest.objects.filter(model__project__user=request.user).count(),
-                'totalSoilLayers': Layer.objects.filter(model__project__user=request.user).count(),
-                'recentActivity': GeotechnicalModel.objects.filter(
-                    user=request.user,
-                    created_at__gte=timezone.now() - timezone.timedelta(hours=24)
-                ).count(),
-            }
-            return Response(stats)
+        try:
+            if project_id:
+                # Get stats for specific project
+                with connection.cursor() as cursor:
+                    cursor.execute("""
+                        SELECT 
+                            COUNT(DISTINCT ct.id) as total_cpt_tests,
+                            COUNT(DISTINCT l.id) as total_soil_layers
+                        FROM geotech_project p
+                        LEFT JOIN geotech_geotechnicalmodel gm ON gm.project_id = p.id
+                        LEFT JOIN geotech_cpttest ct ON ct.model_id = gm.id
+                        LEFT JOIN geotech_layer l ON l.model_id = gm.id
+                        WHERE p.id = %s AND p.user_id = %s
+                    """, [project_id, request.user.id])
+                    
+                    row = cursor.fetchone()
+                    if not row:
+                        return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
+                    
+                    stats = {
+                        'totalCptTests': row[0] or 0,
+                        'totalSoilLayers': row[1] or 0,
+                    }
+                    return Response(stats)
+            else:
+                # Get overall stats
+                with connection.cursor() as cursor:
+                    cursor.execute("""
+                        SELECT 
+                            COUNT(DISTINCT p.id) as total_projects,
+                            COUNT(DISTINCT ct.id) as total_cpt_tests,
+                            COUNT(DISTINCT l.id) as total_soil_layers,
+                            COUNT(DISTINCT CASE 
+                                WHEN gm.created_at >= datetime('now', '-1 day')
+                                THEN gm.id 
+                            END) as recent_activity
+                        FROM geotech_project p
+                        LEFT JOIN geotech_geotechnicalmodel gm ON gm.project_id = p.id
+                        LEFT JOIN geotech_cpttest ct ON ct.model_id = gm.id
+                        LEFT JOIN geotech_layer l ON l.model_id = gm.id
+                        WHERE p.user_id = %s
+                    """, [request.user.id])
+                    
+                    row = cursor.fetchone()
+                    stats = {
+                        'totalProjects': row[0] or 0,
+                        'totalCptTests': row[1] or 0,
+                        'totalSoilLayers': row[2] or 0,
+                        'recentActivity': row[3] or 0,
+                    }
+                    return Response(stats)
+        except Exception as e:
+            logger.error(f"Error fetching stats: {str(e)}")
+            logger.error(traceback.format_exc())
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class GetLayersView(APIView):
     permission_classes = [IsAuthenticated]
