@@ -133,6 +133,7 @@
     "soilType": "Tip Tla",
     "properties": "Osobine",
     "noLayers": "Nema dostupnih slojeva tla",
+    "noModel": "Nema dostupnog geotehničkog modela za ovaj projekat.",
     "deleteConfirm": "Da li ste sigurni da želite da obrišete ovaj sloj tla?",
     "createSuccess": "Sloj tla je uspešno kreiran",
     "updateSuccess": "Sloj tla je uspešno ažuriran",
@@ -155,6 +156,9 @@
     "totalCptTests": "Ukupno CPT Ispitivanja",
     "totalSoilLayers": "Ukupno Slojeva Tla",
     "edit": "Izmena Projekta",
+    "status": "Status",
+    "startDate": "Datum početka",
+    "endDate": "Datum završetka",
     "deleteConfirmation": {
       "message": "Da li ste sigurni da želite da obrišete ovaj projekat?",
       "header": "Potvrda brisanja"

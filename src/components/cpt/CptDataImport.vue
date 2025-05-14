@@ -1,30 +1,23 @@
 <template>
   <Dialog
-    v-model:visible="visible"
+    :visible="visible"
+    @update:visible="$emit('update:visible', $event)"
     :header="$t('cpt.importData')"
     :modal="true"
     :style="{ width: '50vw' }"
-    :closable="true"
   >
     <div class="p-fluid">
       <div class="field">
         <label for="file">{{ $t('cpt.selectFile') }}</label>
         <FileUpload
           id="file"
-          :customUpload="true"
-          :auto="false"
-          :multiple="false"
-          accept=".csv,.txt"
+          mode="basic"
+          :auto="true"
+          accept=".csv,.xlsx"
           :maxFileSize="1000000"
-          @uploader="handleFileUpload"
-          :showUploadButton="false"
-          :showCancelButton="false"
-          chooseLabel="Browse"
-        >
-          <template #empty>
-            <p>{{ $t('cpt.dragAndDrop') }}</p>
-          </template>
-        </FileUpload>
+          @upload="handleUpload"
+          :chooseLabel="$t('cpt.chooseFile')"
+        />
       </div>
 
       <div v-if="previewData.length > 0" class="field">
@@ -49,26 +42,19 @@
     </div>
 
     <template #footer>
-      <div class="flex justify-content-end gap-2">
-        <Button
-          :label="$t('common.cancel')"
-          class="p-button-text"
-          @click="handleCancel"
-        />
-        <Button
-          :label="$t('common.import')"
-          :loading="loading"
-          :disabled="!hasFile"
-          @click="handleImport"
-        />
-      </div>
+      <Button
+        :label="$t('common.cancel')"
+        icon="pi pi-times"
+        class="p-button-text"
+        @click="$emit('update:visible', false)"
+      />
     </template>
   </Dialog>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue';
-import { useCptStore } from '@/stores/cpt';
+import { useCptStore } from '@/stores/cpt.store';
 import { useToast } from 'primevue/usetoast';
 import { showErrorToast, showSuccessToast } from '@/utils/toast';
 
@@ -96,9 +82,16 @@ const columns = [
 
 const hasFile = computed(() => !!file.value);
 
-const handleFileUpload = (event) => {
-  file.value = event.files[0];
-  parseFile(file.value);
+const handleUpload = async (event) => {
+  try {
+    const file = event.files[0];
+    await cptStore.importData(props.projectId, props.testId, file);
+    showSuccessToast(toast, 'CPT data imported successfully');
+    emit('imported');
+    emit('update:visible', false);
+  } catch (error) {
+    showErrorToast(toast, error, 'Failed to import CPT data');
+  }
 };
 
 const parseFile = (file) => {
@@ -145,7 +138,7 @@ const handleImport = async () => {
     await cptStore.importData(props.projectId, props.testId, file.value);
     showSuccessToast(toast, 'Data imported successfully');
     emit('imported');
-    handleCancel();
+    emit('update:visible', false);
   } catch (error) {
     showErrorToast(toast, error, 'Failed to import data');
   } finally {

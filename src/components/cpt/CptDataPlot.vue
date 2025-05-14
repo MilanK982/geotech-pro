@@ -1,230 +1,151 @@
 <template>
   <Dialog
-    v-model:visible="visible"
+    :visible="visible"
+    @update:visible="$emit('update:visible', $event)"
     :header="$t('cpt.plotData')"
     :modal="true"
     :style="{ width: '80vw' }"
-    :closable="true"
   >
-    <div class="p-fluid">
-      <div class="grid">
-        <div class="col-12">
-          <div class="field">
-            <label>{{ $t('cpt.depthVsQc') }}</label>
-            <div class="chart-container">
-              <canvas ref="qcChart"></canvas>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-12">
-          <div class="field">
-            <label>{{ $t('cpt.depthVsFs') }}</label>
-            <div class="chart-container">
-              <canvas ref="fsChart"></canvas>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-12">
-          <div class="field">
-            <label>{{ $t('cpt.depthVsU2') }}</label>
-            <div class="chart-container">
-              <canvas ref="u2Chart"></canvas>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-12">
-          <div class="field">
-            <label>{{ $t('cpt.frictionRatio') }}</label>
-            <div class="chart-container">
-              <canvas ref="frChart"></canvas>
-            </div>
-          </div>
-        </div>
+    <div class="plot-container">
+      <div v-if="loading" class="flex justify-content-center">
+        <ProgressSpinner />
       </div>
+      <div v-else-if="error" class="p-error">
+        {{ error }}
+      </div>
+      <div v-else ref="plotContainer" class="plot"></div>
     </div>
 
     <template #footer>
-      <div class="flex justify-content-end gap-2">
-        <Button
-          :label="$t('common.close')"
-          class="p-button-text"
-          @click="handleClose"
-        />
-        <Button
-          :label="$t('cpt.exportPlot')"
-          class="p-button-success"
-          @click="handleExport"
-        />
-      </div>
+      <Button
+        :label="$t('common.close')"
+        icon="pi pi-times"
+        class="p-button-text"
+        @click="$emit('update:visible', false)"
+      />
     </template>
   </Dialog>
 </template>
 
 <script setup>
 import { ref, onMounted, watch } from 'vue';
-import { Chart, registerables } from 'chart.js';
-import { useCptStore } from '@/stores/cpt';
+import { useCptStore } from '@/stores/cpt.store';
 import { useToast } from 'primevue/usetoast';
-import { showErrorToast, showSuccessToast } from '@/utils/toast';
-
-Chart.register(...registerables);
+import { showErrorToast } from '@/utils/toast';
+import Plot from 'plotly.js-dist';
 
 const props = defineProps({
-  projectId: { type: String, required: true },
-  testId: { type: String, required: true },
-  visible: { type: Boolean, required: true },
+  visible: {
+    type: Boolean,
+    required: true
+  },
+  projectId: {
+    type: String,
+    required: true
+  },
+  testId: {
+    type: String,
+    required: true
+  }
 });
 
 const emit = defineEmits(['update:visible']);
 
 const cptStore = useCptStore();
 const toast = useToast();
+const plotContainer = ref(null);
+const loading = ref(false);
+const error = ref(null);
 
-const qcChart = ref(null);
-const fsChart = ref(null);
-const u2Chart = ref(null);
-const frChart = ref(null);
+const loadAndPlotData = async () => {
+  if (!props.testId) return;
 
-let charts = {
-  qc: null,
-  fs: null,
-  u2: null,
-  fr: null,
-};
+  loading.value = true;
+  error.value = null;
 
-const chartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  scales: {
-    y: {
-      reverse: true,
-      title: {
-        display: true,
-        text: 'Depth (m)',
-      },
-    },
-  },
-  plugins: {
-    legend: {
-      display: false,
-    },
-  },
-};
-
-const createChart = (canvas, data, label, color) => {
-  return new Chart(canvas, {
-    type: 'line',
-    data: {
-      datasets: [{
-        label,
-        data,
-        borderColor: color,
-        backgroundColor: color + '20',
-        fill: true,
-        tension: 0.4,
-      }],
-    },
-    options: chartOptions,
-  });
-};
-
-const calculateFrictionRatio = (data) => {
-  return data.map(point => ({
-    x: (point.fs / point.qc) * 100,
-    y: point.depth,
-  }));
-};
-
-const initCharts = (data) => {
-  Object.values(charts).forEach(chart => {
-    if (chart) chart.destroy();
-  });
-
-  charts.qc = createChart(
-    qcChart.value,
-    data.map(point => ({ x: point.qc, y: point.depth })),
-    'Cone Resistance (MPa)',
-    '#FF6384'
-  );
-
-  charts.fs = createChart(
-    fsChart.value,
-    data.map(point => ({ x: point.fs, y: point.depth })),
-    'Sleeve Friction (kPa)',
-    '#36A2EB'
-  );
-
-  charts.u2 = createChart(
-    u2Chart.value,
-    data.map(point => ({ x: point.u2, y: point.depth })),
-    'Pore Pressure (kPa)',
-    '#4BC0C0'
-  );
-
-  charts.fr = createChart(
-    frChart.value,
-    calculateFrictionRatio(data),
-    'Friction Ratio (%)',
-    '#FFCE56'
-  );
-};
-
-const handleClose = () => {
-  emit('update:visible', false);
-};
-
-const handleExport = () => {
   try {
-    const canvas = qcChart.value; // Primer: izvoz prvog grafika
-    const link = document.createElement('a');
-    link.download = `cpt-plot-${props.testId}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-    showSuccessToast(toast, 'Plot exported successfully');
-  } catch (error) {
-    showErrorToast(toast, error, 'Failed to export plot');
+    const test = cptStore.getTestById(props.testId);
+    if (!test || !test.data || test.data.length === 0) {
+      throw new Error('No data available for plotting');
+    }
+
+    const data = test.data;
+    const traces = [
+      {
+        y: data.map(d => d.depth),
+        x: data.map(d => d.qc),
+        name: 'qc',
+        type: 'scatter',
+        mode: 'lines',
+        line: { color: 'blue' }
+      },
+      {
+        y: data.map(d => d.depth),
+        x: data.map(d => d.fs),
+        name: 'fs',
+        type: 'scatter',
+        mode: 'lines',
+        line: { color: 'red' }
+      },
+      {
+        y: data.map(d => d.depth),
+        x: data.map(d => d.u2),
+        name: 'u2',
+        type: 'scatter',
+        mode: 'lines',
+        line: { color: 'green' }
+      }
+    ];
+
+    const layout = {
+      title: `CPT Test ${test.testNumber}`,
+      xaxis: {
+        title: 'Value',
+        autorange: true
+      },
+      yaxis: {
+        title: 'Depth (m)',
+        autorange: 'reversed'
+      },
+      showlegend: true,
+      legend: {
+        x: 1,
+        xanchor: 'right',
+        y: 1
+      }
+    };
+
+    Plot.newPlot(plotContainer.value, traces, layout);
+  } catch (err) {
+    error.value = err.message;
+    showErrorToast(toast, err, 'Failed to plot CPT data');
+  } finally {
+    loading.value = false;
   }
 };
 
-watch(() => props.visible, async (newValue) => {
-  if (newValue && props.testId) {
-    const test = cptStore.getTestById(props.testId);
-    if (test && test.data && test.data.length > 0) {
-      initCharts(test.data);
-    } else {
-      showErrorToast(toast, new Error('No data available'), 'No data available for plotting');
-      handleClose();
-    }
+watch(() => props.visible, (newValue) => {
+  if (newValue) {
+    loadAndPlotData();
   }
 });
 
 onMounted(() => {
-  if (props.visible && props.testId) {
-    const test = cptStore.getTestById(props.testId);
-    if (test && test.data && test.data.length > 0) {
-      initCharts(test.data);
-    }
+  if (props.visible) {
+    loadAndPlotData();
   }
 });
 </script>
 
 <style scoped>
-.chart-container {
-  position: relative;
-  height: 300px;
+.plot-container {
   width: 100%;
+  height: 600px;
+  position: relative;
 }
 
-.field {
-  margin-bottom: 2rem;
-}
-
-.field label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
+.plot {
+  width: 100%;
+  height: 100%;
 }
 </style> 

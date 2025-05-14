@@ -10,6 +10,7 @@ import router from './router';
 import i18n from './i18n';
 import 'primeicons/primeicons.css';
 import 'primeflex/primeflex.css';
+import Tooltip from 'primevue/tooltip';
 
 // PrimeVue components
 import Button from 'primevue/button';
@@ -49,6 +50,7 @@ app.use(PrimeVue, {
 });
 app.use(ConfirmationService);
 app.use(ToastService);
+app.directive('tooltip', Tooltip);
 
 // Register global components
 app.component('Button', Button);

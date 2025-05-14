@@ -65,51 +65,49 @@ class ProjectView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, project_id=None):
-        if project_id:
-            try:
-                project = Project.objects.get(id=project_id, user=request.user)
-                serializer = ProjectSerializer(project)
-                return Response(serializer.data)
-            except Project.DoesNotExist:
-                return Response({'error': 'Project not found'}, status=status.HTTP_404_NOT_FOUND)
-            except Exception as e:
-                logger.error(f"Error fetching single project: {str(e)}")
-                logger.error(traceback.format_exc())
-                return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        else:
-            try:
-                logger.debug("Fetching all projects for user")
+        try:
+            if project_id:
+                # Get single project
+                project = Project.objects.filter(
+                    id=project_id,
+                    user=request.user
+                ).first()
                 
-                with connection.cursor() as cursor:
-                    cursor.execute("""
-                        SELECT p.*, 
-                               COUNT(DISTINCT gm.id) as models_count,
-                               COUNT(DISTINCT ct.id) as cpt_tests_count,
-                               COUNT(DISTINCT l.id) as layers_count
-                        FROM geotech_project p
-                        LEFT JOIN geotech_geotechnicalmodel gm ON gm.project_id = p.id
-                        LEFT JOIN geotech_cpttest ct ON ct.model_id = gm.id
-                        LEFT JOIN geotech_layer l ON l.model_id = gm.id
-                        WHERE p.user_id = %s
-                        GROUP BY p.id
-                        ORDER BY p.updated_at DESC
-                    """, [request.user.id])
-                    
-                    columns = [col[0] for col in cursor.description]
-                    projects = []
-                    for row in cursor.fetchall():
-                        project_dict = dict(zip(columns, row))
-                        # Convert datetime objects to strings
-                        for key in ['created_at', 'updated_at']:
-                            if key in project_dict and project_dict[key]:
-                                project_dict[key] = project_dict[key].isoformat()
-                        projects.append(project_dict)
+                if not project:
+                    return Response(
+                        {'error': 'Project not found'},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
                 
-                return Response(projects)
-            except Exception as e:
-                logger.error(f"Error fetching projects: {str(e)}")
-                logger.error(traceback.format_exc())
-                return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                return Response({
+                    'id': project.id,
+                    'name': project.name,
+                    'description': project.description,
+                    'status': project.status,
+                    'created_at': project.created_at,
+                    'updated_at': project.updated_at
+                })
+            else:
+                # Get all projects
+                projects = Project.objects.filter(
+                    user=request.user
+                ).order_by('-updated_at')
+                
+                return Response([{
+                    'id': project.id,
+                    'name': project.name,
+                    'description': project.description,
+                    'status': project.status,
+                    'created_at': project.created_at,
+                    'updated_at': project.updated_at
+                } for project in projects])
+                
+        except Exception as e:
+            logger.error(f"Error fetching projects: {str(e)}")
+            return Response(
+                {'error': 'Internal server error'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     def post(self, request):
         try:

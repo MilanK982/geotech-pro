@@ -133,7 +133,7 @@
 import { ref, computed } from 'vue';
 import { useVuelidate } from '@vuelidate/core';
 import { required } from '@vuelidate/validators';
-import { useCptStore } from '@/stores/cpt';
+import { useCptStore } from '@/stores/cpt.store';
 import { useToast } from 'primevue/usetoast';
 import { showErrorToast, showSuccessToast } from '@/utils/toast';
 import CptDataImport from './CptDataImport.vue';

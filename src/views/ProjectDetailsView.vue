@@ -96,7 +96,15 @@
             <CptTestList :project-id="projectId" />
           </TabPanel>
           <TabPanel :header="$t('soil.title')">
-            <SoilLayerList :project-id="projectId" />
+            <div v-if="project?.geotechnical_models?.[0]?.id">
+              <SoilLayerList 
+                :project-id="projectId"
+                :model-id="project.geotechnical_models[0].id"
+              />
+            </div>
+            <div v-else class="p-4 text-center">
+              <p>{{ $t('soil.noModel') }}</p>
+            </div>
           </TabPanel>
         </TabView>
       </div>

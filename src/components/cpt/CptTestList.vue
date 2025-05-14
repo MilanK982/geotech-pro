@@ -129,11 +129,12 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useCptStore } from '@/stores/cpt';
+import { useCptStore } from '@/stores/cpt.store';
 import { useToast } from 'primevue/usetoast';
 import { showErrorToast, showSuccessToast } from '@/utils/toast';
 import { useConfirm } from 'primevue/useconfirm';
 import CptTestForm from './CptTestForm.vue';
+import Tooltip from 'primevue/tooltip';
 
 const props = defineProps({
   projectId: { type: String, required: true },

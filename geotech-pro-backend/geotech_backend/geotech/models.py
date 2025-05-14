@@ -2,35 +2,25 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-class ProjectManager(models.Manager):
-    def get_queryset(self):
-        return super().get_queryset()
+class ProjectQuerySet(models.QuerySet):
+    def for_user(self, user):
+        return self.filter(user=user)
+
+    def with_related_data(self):
+        return self.select_related('user')
 
 class Project(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='projects')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
-    location = models.CharField(max_length=255, blank=True, null=True)
-    client = models.CharField(max_length=255, blank=True, null=True)
-    status = models.CharField(max_length=50, choices=[
-        ('active', 'Active'),
-        ('completed', 'Completed'),
-        ('on_hold', 'On Hold'),
-        ('cancelled', 'Cancelled'),
-    ], default='active')
-    start_date = models.DateField(blank=True, null=True)
-    end_date = models.DateField(blank=True, null=True)
+    status = models.CharField(max_length=50, default='active')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-    objects = ProjectManager()
 
     def __str__(self):
         return self.name
     
     class Meta:
-        verbose_name = 'project'
-        verbose_name_plural = 'projects'
         ordering = ['-updated_at']
 
 class Object(models.Model):

@@ -164,7 +164,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-import { useSoilStore } from '@/stores/soil';
+import { useSoilStore } from '@/stores/soil.store';
 import { useToast } from 'primevue/usetoast';
 import { useConfirm } from 'primevue/useconfirm';
 import Button from 'primevue/button';
@@ -177,10 +177,8 @@ import ProgressSpinner from 'primevue/progressspinner';
 import ConfirmDialog from 'primevue/confirmdialog';
 
 const props = defineProps({
-  modelId: {
-    type: [String, Number],
-    required: true
-  }
+  projectId: { type: String, required: true },
+  modelId: { type: String, required: true }
 });
 
 const soilStore = useSoilStore();
@@ -193,6 +191,7 @@ const saving = ref(false);
 const submitted = ref(false);
 const showAddLayerDialog = ref(false);
 const layers = ref([]);
+const error = ref(null);
 
 const newLayer = ref({
   name: '',

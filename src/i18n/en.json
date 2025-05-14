@@ -139,6 +139,7 @@
     "thickness": "Thickness",
     "properties": "Properties",
     "noLayers": "No soil layers found",
+    "noModel": "No geotechnical model available for this project.",
     "createSuccess": "Soil layer created successfully",
     "updateSuccess": "Soil layer updated successfully",
     "saveError": "Failed to save soil layer",
@@ -164,6 +165,9 @@
     "totalCptTests": "Total CPT Tests",
     "totalSoilLayers": "Total Soil Layers",
     "edit": "Edit Project",
+    "status": "Status",
+    "startDate": "Start Date",
+    "endDate": "End Date",
     "deleteConfirmation": {
       "message": "Are you sure you want to delete this project?",
       "header": "Delete Confirmation"
