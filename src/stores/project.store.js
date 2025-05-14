@@ -1,4 +1,3 @@
-// src/stores/project.store.js
 import { defineStore } from 'pinia';
 import {
   getProjects,
@@ -9,7 +8,6 @@ import {
   getProjectStats,
   getProjectStatistics,
 } from '@/services/project.service';
-import { showErrorToast, showSuccessToast } from '@/utils/toast';
 
 export const useProjectStore = defineStore('project', {
   state: () => ({

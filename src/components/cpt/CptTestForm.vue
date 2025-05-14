@@ -185,14 +185,14 @@ const handleSubmit = async () => {
   try {
     if (props.testId) {
       await cptStore.updateTest(props.projectId, props.testId, formData.value);
-      showSuccessToast('CPT test updated successfully');
+      showSuccessToast(toast, 'CPT test updated successfully');
     } else {
       await cptStore.createTest(props.projectId, formData.value);
-      showSuccessToast('CPT test created successfully');
+      showSuccessToast(toast, 'CPT test created successfully');
     }
     emit('saved');
   } catch (error) {
-    showErrorToast(error, 'Failed to save CPT test');
+    showErrorToast(toast, error, 'Failed to save CPT test');
   } finally {
     loading.value = false;
   }
@@ -215,9 +215,9 @@ const handleExport = async () => {
 
   try {
     await cptStore.exportData(props.projectId, props.testId);
-    showSuccessToast('CPT data exported successfully');
+    showSuccessToast(toast, 'CPT data exported successfully');
   } catch (error) {
-    showErrorToast(error, 'Failed to export data');
+    showErrorToast(toast, error, 'Failed to export data');
   }
 };
 

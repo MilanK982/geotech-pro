@@ -73,7 +73,7 @@ const initChart = async () => {
   try {
     const layers = await soilStore.fetchLayersByProject(props.projectId);
     if (!layers.length) {
-      showErrorToast(new Error('No data available'), 'No data available for plotting');
+      showErrorToast(toast, new Error('No data available'), 'No data available for plotting');
       return;
     }
 
@@ -152,7 +152,7 @@ const initChart = async () => {
       },
     });
   } catch (error) {
-    showErrorToast(error, 'Failed to generate plot');
+    showErrorToast(toast, error, 'Failed to generate plot');
   }
 };
 
@@ -165,9 +165,9 @@ const handleExport = () => {
     link.download = `soil-layers-${props.projectId}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
-    showSuccessToast('Plot exported successfully');
+    showSuccessToast(toast, 'Plot exported successfully');
   } catch (error) {
-    showErrorToast(error, 'Failed to export plot');
+    showErrorToast(toast, error, 'Failed to export plot');
   }
 };
 

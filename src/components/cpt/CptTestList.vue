@@ -159,7 +159,7 @@ const loadTests = async () => {
   try {
     tests.value = await cptStore.getTestsByProject(props.projectId);
   } catch (error) {
-    showErrorToast(error, 'Failed to load CPT tests');
+    showErrorToast(toast, error, 'Failed to load CPT tests');
   } finally {
     loading.value = false;
   }
@@ -186,10 +186,10 @@ const handleDelete = (test) => {
     accept: async () => {
       try {
         await cptStore.deleteTest(props.projectId, test.id);
-        showSuccessToast('CPT test deleted successfully');
+        showSuccessToast(toast, 'CPT test deleted successfully');
         loadTests();
       } catch (error) {
-        showErrorToast(error, 'Failed to delete CPT test');
+        showErrorToast(toast, error, 'Failed to delete CPT test');
       }
     },
   });

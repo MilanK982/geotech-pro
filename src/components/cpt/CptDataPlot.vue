@@ -183,9 +183,9 @@ const handleExport = () => {
     link.download = `cpt-plot-${props.testId}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
-    showSuccessToast('Plot exported successfully');
+    showSuccessToast(toast, 'Plot exported successfully');
   } catch (error) {
-    showErrorToast(error, 'Failed to export plot');
+    showErrorToast(toast, error, 'Failed to export plot');
   }
 };
 
@@ -195,7 +195,7 @@ watch(() => props.visible, async (newValue) => {
     if (test && test.data && test.data.length > 0) {
       initCharts(test.data);
     } else {
-      showErrorToast(new Error('No data available'), 'No data available for plotting');
+      showErrorToast(toast, new Error('No data available'), 'No data available for plotting');
       handleClose();
     }
   }

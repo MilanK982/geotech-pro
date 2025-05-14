@@ -166,14 +166,14 @@ const handleSubmit = async () => {
   try {
     if (props.isEdit) {
       await projectStore.updateProject(route.params.id, formData.value);
-      showSuccessToast('Project updated successfully');
+      showSuccessToast(toast, 'Project updated successfully');
     } else {
       await projectStore.createProject(formData.value);
-      showSuccessToast('Project created successfully');
+      showSuccessToast(toast, 'Project created successfully');
     }
     router.push('/projects');
   } catch (error) {
-    showErrorToast(error, 'Failed to save project');
+    showErrorToast(toast, error, 'Failed to save project');
   } finally {
     loading.value = false;
   }

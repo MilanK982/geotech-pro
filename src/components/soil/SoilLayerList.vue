@@ -134,7 +134,7 @@ const loadLayers = async () => {
     await soilStore.fetchLayersByProject(props.projectId);
     table.value.setData(soilStore.layers);
   } catch (error) {
-    showErrorToast(error, 'Failed to load soil layers');
+    showErrorToast(toast, error, 'Failed to load soil layers');
   }
 };
 
@@ -159,10 +159,10 @@ const handleDelete = (layer) => {
     accept: async () => {
       try {
         await soilStore.deleteLayer(props.projectId, layer.id);
-        showSuccessToast('Soil layer deleted successfully');
+        showSuccessToast(toast, 'Soil layer deleted successfully');
         loadLayers();
       } catch (error) {
-        showErrorToast(error, 'Failed to delete soil layer');
+        showErrorToast(toast, error, 'Failed to delete soil layer');
       }
     },
   });
@@ -171,7 +171,7 @@ const handleDelete = (layer) => {
 const handleSaved = () => {
   showFormDialog.value = false;
   loadLayers();
-  showSuccessToast('Soil layer saved successfully');
+  showSuccessToast(toast, 'Soil layer saved successfully');
 };
 
 onMounted(() => {

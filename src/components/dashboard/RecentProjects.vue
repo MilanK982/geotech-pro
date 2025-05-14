@@ -96,9 +96,9 @@ const confirmDelete = (project) => {
 const deleteProject = async (project) => {
   try {
     await projectStore.deleteProject(project.id);
-    showSuccessToast('Project deleted successfully');
+    showSuccessToast(toast, 'Project deleted successfully');
   } catch (error) {
-    showErrorToast(error, 'Failed to delete project');
+    showErrorToast(toast, error, 'Failed to delete project');
   }
 };
 </script>

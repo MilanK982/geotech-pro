@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import api from '@/services/api'
-import { showErrorToast, showSuccessToast } from '@/utils/toast'
 
 export const useCptStore = defineStore('cpt', () => {
   const tests = ref([])
@@ -26,8 +25,7 @@ export const useCptStore = defineStore('cpt', () => {
       tests.value = response.data
       return response.data
     } catch (err) {
-      error.value = err.message
-      showErrorToast(err, 'Failed to fetch CPT tests')
+      error.value = err.message || 'Failed to fetch CPT tests'
       throw err
     } finally {
       loading.value = false
@@ -40,11 +38,9 @@ export const useCptStore = defineStore('cpt', () => {
     try {
       const response = await api.post(`/projects/${projectId}/cpt-tests/`, testData)
       tests.value.push(response.data)
-      showSuccessToast('CPT test created successfully')
       return response.data
     } catch (err) {
-      error.value = err.message
-      showErrorToast(err, 'Failed to create CPT test')
+      error.value = err.message || 'Failed to create CPT test'
       throw err
     } finally {
       loading.value = false
@@ -60,11 +56,9 @@ export const useCptStore = defineStore('cpt', () => {
       if (index !== -1) {
         tests.value[index] = response.data
       }
-      showSuccessToast('CPT test updated successfully')
       return response.data
     } catch (err) {
-      error.value = err.message
-      showErrorToast(err, 'Failed to update CPT test')
+      error.value = err.message || 'Failed to update CPT test'
       throw err
     } finally {
       loading.value = false
@@ -77,10 +71,8 @@ export const useCptStore = defineStore('cpt', () => {
     try {
       await api.delete(`/projects/${projectId}/cpt-tests/${testId}/`)
       tests.value = tests.value.filter(test => test.id !== testId)
-      showSuccessToast('CPT test deleted successfully')
     } catch (err) {
-      error.value = err.message
-      showErrorToast(err, 'Failed to delete CPT test')
+      error.value = err.message || 'Failed to delete CPT test'
       throw err
     } finally {
       loading.value = false
@@ -103,11 +95,9 @@ export const useCptStore = defineStore('cpt', () => {
       if (index !== -1) {
         tests.value[index] = response.data
       }
-      showSuccessToast('CPT data imported successfully')
       return response.data
     } catch (err) {
-      error.value = err.message
-      showErrorToast(err, 'Failed to import CPT data')
+      error.value = err.message || 'Failed to import CPT data'
       throw err
     } finally {
       loading.value = false
@@ -129,10 +119,8 @@ export const useCptStore = defineStore('cpt', () => {
       a.click()
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
-      showSuccessToast('CPT data exported successfully')
     } catch (err) {
-      error.value = err.message
-      showErrorToast(err, 'Failed to export CPT data')
+      error.value = err.message || 'Failed to export CPT data'
       throw err
     } finally {
       loading.value = false
@@ -152,4 +140,4 @@ export const useCptStore = defineStore('cpt', () => {
     importData,
     exportData
   }
-}) 
+})

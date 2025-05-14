@@ -152,7 +152,7 @@ onMounted(async () => {
     loading.value = true;
     await projectStore.fetchProjects();
   } catch (error) {
-    showErrorToast(error, 'Failed to load projects');
+    showErrorToast(toast, error, 'Failed to load projects');
   } finally {
     loading.value = false;
   }
@@ -195,9 +195,9 @@ const confirmDelete = (project) => {
 const deleteProject = async (project) => {
   try {
     await projectStore.deleteProject(project.id);
-    showSuccessToast('Project deleted successfully');
+    showSuccessToast(toast, 'Project deleted successfully');
   } catch (error) {
-    showErrorToast(error, 'Failed to delete project');
+    showErrorToast(toast, error, 'Failed to delete project');
   }
 };
 </script>

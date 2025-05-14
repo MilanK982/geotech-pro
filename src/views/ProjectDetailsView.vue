@@ -157,7 +157,7 @@ const loadProject = async () => {
     project.value = await projectStore.fetchProject(projectId);
     statistics.value = await projectStore.getProjectStatistics(projectId);
   } catch (error) {
-    showErrorToast(error, 'Failed to load project details');
+    showErrorToast(toast, error, 'Failed to load project details');
   }
 };
 
@@ -174,10 +174,10 @@ const handleDelete = () => {
     accept: async () => {
       try {
         await projectStore.deleteProject(projectId);
-        showSuccessToast('Project deleted successfully');
+        showSuccessToast(toast, 'Project deleted successfully');
         router.push('/projects');
       } catch (error) {
-        showErrorToast(error, 'Failed to delete project');
+        showErrorToast(toast, error, 'Failed to delete project');
       }
     },
   });

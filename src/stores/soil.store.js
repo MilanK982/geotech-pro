@@ -1,7 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import api from '@/services/api'
-import { showErrorToast, showSuccessToast } from '@/utils/toast'
 
 export const useSoilStore = defineStore('soil', () => {
   const layers = ref([])
@@ -26,8 +25,7 @@ export const useSoilStore = defineStore('soil', () => {
       layers.value = response.data
       return response.data
     } catch (err) {
-      error.value = err.message
-      showErrorToast(err, 'Failed to fetch soil layers')
+      error.value = err.message || 'Failed to fetch soil layers'
       throw err
     } finally {
       loading.value = false
@@ -40,11 +38,9 @@ export const useSoilStore = defineStore('soil', () => {
     try {
       const response = await api.post(`/projects/${projectId}/soil-layers/`, layerData)
       layers.value.push(response.data)
-      showSuccessToast('Soil layer created successfully')
       return response.data
     } catch (err) {
-      error.value = err.message
-      showErrorToast(err, 'Failed to create soil layer')
+      error.value = err.message || 'Failed to create soil layer'
       throw err
     } finally {
       loading.value = false
@@ -60,11 +56,9 @@ export const useSoilStore = defineStore('soil', () => {
       if (index !== -1) {
         layers.value[index] = response.data
       }
-      showSuccessToast('Soil layer updated successfully')
       return response.data
     } catch (err) {
-      error.value = err.message
-      showErrorToast(err, 'Failed to update soil layer')
+      error.value = err.message || 'Failed to update soil layer'
       throw err
     } finally {
       loading.value = false
@@ -77,10 +71,8 @@ export const useSoilStore = defineStore('soil', () => {
     try {
       await api.delete(`/projects/${projectId}/soil-layers/${layerId}/`)
       layers.value = layers.value.filter(layer => layer.id !== layerId)
-      showSuccessToast('Soil layer deleted successfully')
     } catch (err) {
-      error.value = err.message
-      showErrorToast(err, 'Failed to delete soil layer')
+      error.value = err.message || 'Failed to delete soil layer'
       throw err
     } finally {
       loading.value = false
@@ -102,16 +94,11 @@ export const useSoilStore = defineStore('soil', () => {
   }
 
   return {
-    // State
     layers,
     loading,
     error,
-
-    // Getters
     getLayersByProject,
     getLayerById,
-
-    // Actions
     fetchLayersByProject,
     createLayer,
     updateLayer,
@@ -119,4 +106,4 @@ export const useSoilStore = defineStore('soil', () => {
     calculateLayerThickness,
     validateLayerDepths
   }
-}) 
+})

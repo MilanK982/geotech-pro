@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia';
 import AuthService from '@/services/auth.service';
-import { showErrorToast, showSuccessToast } from '@/utils/toast';
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
@@ -21,10 +20,9 @@ export const useAuthStore = defineStore('auth', {
       try {
         const userData = await AuthService.login(username, password);
         this.user = userData;
-        showSuccessToast('Login successful');
+        return userData;
       } catch (error) {
-        this.error = error.message;
-        showErrorToast(error, 'Login failed');
+        this.error = error.message || 'Login failed';
         throw error;
       } finally {
         this.loading = false;
@@ -37,10 +35,9 @@ export const useAuthStore = defineStore('auth', {
       try {
         const userData = await AuthService.register(email, password, fullName);
         this.user = userData;
-        showSuccessToast('Registration successful');
+        return userData;
       } catch (error) {
-        this.error = error.message;
-        showErrorToast(error, 'Registration failed');
+        this.error = error.message || 'Registration failed';
         throw error;
       } finally {
         this.loading = false;
@@ -50,7 +47,6 @@ export const useAuthStore = defineStore('auth', {
     logout() {
       AuthService.logout();
       this.user = null;
-      showSuccessToast('Logout successful');
     }
   }
-}); 
+});

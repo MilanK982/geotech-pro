@@ -160,7 +160,7 @@ const handleSubmit = async () => {
   if (!isValid) return;
 
   if (!soilStore.validateLayerDepths(formData.value)) {
-    showErrorToast(new Error('Invalid depths'), 'Bottom depth must be greater than top depth');
+    showErrorToast(toast, new Error('Invalid depths'), 'Bottom depth must be greater than top depth');
     return;
   }
 
@@ -168,14 +168,14 @@ const handleSubmit = async () => {
   try {
     if (props.layerId) {
       await soilStore.updateLayer(props.projectId, props.layerId, formData.value);
-      showSuccessToast('Soil layer updated successfully');
+      showSuccessToast(toast, 'Soil layer updated successfully');
     } else {
       await soilStore.createLayer(props.projectId, formData.value);
-      showSuccessToast('Soil layer created successfully');
+      showSuccessToast(toast, 'Soil layer created successfully');
     }
     emit('saved');
   } catch (error) {
-    showErrorToast(error, 'Failed to save soil layer');
+    showErrorToast(toast, error, 'Failed to save soil layer');
   } finally {
     loading.value = false;
   }

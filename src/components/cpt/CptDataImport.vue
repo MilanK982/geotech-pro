@@ -113,7 +113,7 @@ const parseFile = (file) => {
       const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
 
       if (missingHeaders.length > 0) {
-        showErrorToast(new Error(`Missing columns: ${missingHeaders.join(', ')}`), `Missing required columns`);
+        showErrorToast(toast, new Error(`Missing columns: ${missingHeaders.join(', ')}`), `Missing required columns`);
         return;
       }
 
@@ -131,7 +131,7 @@ const parseFile = (file) => {
         .filter(row => !isNaN(row.depth) && !isNaN(row.qc) && !isNaN(row.fs) && !isNaN(row.u2))
         .slice(0, 10);
     } catch (error) {
-      showErrorToast(error, 'Failed to parse file');
+      showErrorToast(toast, error, 'Failed to parse file');
     }
   };
   reader.readAsText(file);
@@ -143,11 +143,11 @@ const handleImport = async () => {
   loading.value = true;
   try {
     await cptStore.importData(props.projectId, props.testId, file.value);
-    showSuccessToast('Data imported successfully');
+    showSuccessToast(toast, 'Data imported successfully');
     emit('imported');
     handleCancel();
   } catch (error) {
-    showErrorToast(error, 'Failed to import data');
+    showErrorToast(toast, error, 'Failed to import data');
   } finally {
     loading.value = false;
   }
