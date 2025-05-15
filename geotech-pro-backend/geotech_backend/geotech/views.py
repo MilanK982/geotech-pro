@@ -71,7 +71,7 @@ class ProjectView(APIView):
                 project = Project.objects.filter(
                     id=project_id,
                     user=request.user
-                ).first()
+                ).select_related('user').first()
                 
                 if not project:
                     return Response(
@@ -79,19 +79,35 @@ class ProjectView(APIView):
                         status=status.HTTP_404_NOT_FOUND
                     )
                 
+                # Get related data
+                objects = project.objects.all()
+                models = project.geotechnical_models.all()
+                
                 return Response({
                     'id': project.id,
                     'name': project.name,
                     'description': project.description,
                     'status': project.status,
                     'created_at': project.created_at,
-                    'updated_at': project.updated_at
+                    'updated_at': project.updated_at,
+                    'objects': [{
+                        'id': obj.id,
+                        'name': obj.name,
+                        'created_at': obj.created_at
+                    } for obj in objects],
+                    'geotechnical_models': [{
+                        'id': model.id,
+                        'name': model.name,
+                        'npv': model.npv,
+                        'npv_max': model.npv_max,
+                        'created_at': model.created_at
+                    } for model in models]
                 })
             else:
                 # Get all projects
                 projects = Project.objects.filter(
                     user=request.user
-                ).order_by('-updated_at')
+                ).select_related('user').order_by('-updated_at')
                 
                 return Response([{
                     'id': project.id,
